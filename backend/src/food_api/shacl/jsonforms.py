@@ -72,6 +72,8 @@ class FormDefinition:
     token_by_iri: dict[str, str] = field(default_factory=dict)
     #: JSON key -> option token -> surcharge, for pricing a valid order.
     surcharges: dict[str, dict[str, Decimal]] = field(default_factory=dict)
+    #: The JSON key whose value multiplies the total, if the shape declares one.
+    multiplier_field: str | None = None
 
 
 def _number(value: Decimal) -> int | float:
@@ -245,6 +247,7 @@ def build_form(
     key_by_path: dict[str, str] = {}
     token_by_iri: dict[str, str] = {}
     surcharges: dict[str, dict[str, Decimal]] = {}
+    multiplier_field: str | None = None
     context: dict[str, Any] = dict(base_context)
 
     for prop in properties:
@@ -252,6 +255,8 @@ def build_form(
         if prop.is_required:
             required.append(prop.name)
         key_by_path[prop.path] = prop.name
+        if prop.is_multiplier:
+            multiplier_field = prop.name
         context[prop.name] = _context_entry(prop)
         if prop.options:
             surcharges[prop.name] = {option.token: option.surcharge for option in prop.options}
@@ -280,4 +285,5 @@ def build_form(
         key_by_path=key_by_path,
         token_by_iri=token_by_iri,
         surcharges=surcharges,
+        multiplier_field=multiplier_field,
     )

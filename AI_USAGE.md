@@ -21,12 +21,12 @@ The working method was:
 1. The task was read from the PDF and a plan was agreed before any code was written, including
    explicit decisions on the frontend stack, the setup-script style, and the repository target.
 2. The SHACL and JSON-LD modelling was **probed against pySHACL before being committed** rather
-   than assumed — several of the design notes in `DESIGN.md §5` are findings from that probing,
+   than assumed — several of the design notes in `DESIGN.md §6` are findings from that probing,
    not from documentation.
 3. Every layer was run and verified as it was written: the validation core against a scratch
    harness, the API over ASGI, the integration tests against a live Meilisearch container, and
    the whole stack through Docker Compose.
-4. Lint (`ruff`), type checking (`ty`), 100 backend tests and 16 frontend tests all pass.
+4. Lint (`ruff`), type checking (`ty`), 378 backend tests and 33 frontend tests all pass.
 
 **Practically all source code in this repository was AI-generated.** The human contribution was
 direction, scope decisions, and review.
@@ -45,7 +45,10 @@ direction, scope decisions, and review.
 > - the **error-pointer mapping** in `backend/src/food_api/shacl/report.py`, and why the
 >   backend emits JSON pointers at all;
 > - the **`SearchPort` boundary** and the degradation behaviour it buys;
-> - the **`sh:name` deviation** documented in `DESIGN.md` §6, which is the single most
+> - the **translation model** in `DESIGN.md` §3 — why a language costs one file, why the
+>   property shapes had to be named for that to work, and the invariant that translation
+>   changes only what people read;
+> - the **`sh:name` deviation** documented in `DESIGN.md` §7, which is the single most
 >   questionable modelling choice here and the one most likely to be probed.
 >
 > Anything you have not actually read line by line belongs in the section below. That is not a
@@ -65,7 +68,16 @@ direction, scope decisions, and review.
   `vite.config.ts`, `.pre-commit-config.yaml`, both `Dockerfile`s, `nginx.conf`, `compose.yaml`.
 - **The CI workflow**, `.github/workflows/ci.yaml`.
 - **The setup, dev and check scripts** in `scripts/`, in both Bash and PowerShell.
-- **CSS.** `frontend/src/styles.css` is presentation only and carries no logic.
+- **CSS.** `frontend/src/styles.css` is presentation only and carries no logic. Its palette and
+  typography are taken from datascience.ch's own stylesheet.
+- **Translations.** The German, French and Italian content in `backend/src/food_api/data/i18n/`
+  is AI-produced. It reads correctly to me, but it has not been reviewed by a native speaker.
+
+  **The Romansh (`rm.ttl`) has not been reviewed by anyone and should be treated as a
+  placeholder.** It is included because the architecture makes a language cost one file and
+  omitting Switzerland's fourth national language would have been a decision rather than a
+  constraint — but shipping an unreviewed translation as finished work would be a different
+  kind of mistake, and the file says so in its own header.
 - **Prose.** This file, `README.md`, `DESIGN.md` and `CHECKLIST.md` were drafted by AI from the
   work actually done. The technical claims in them were verified against running code; the
   writing is not mine.

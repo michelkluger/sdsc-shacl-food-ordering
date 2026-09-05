@@ -122,7 +122,74 @@ function: Ajv addresses errors by `instancePath`, which is also a JSON pointer.
 
 ---
 
-## 3. Adding a dish
+## 3. Languages
+
+Every form is served in the four Swiss national languages and English: German, French, Italian,
+**Romansh**, English. Romansh is included because in this design a language costs one file, so
+omitting it would have been a decision rather than a constraint.
+
+### Adding a language is adding one file
+
+```
+backend/src/food_api/data/i18n/<lang>.ttl
+```
+
+It declares nothing. Every subject in it already exists in the vocabulary, the shared property
+shapes or a dish shape; the file only attaches language-tagged literals to them:
+
+```turtle
+food:RamenBrothProperty
+    rdfs:label "Brühe"@de ;
+    sh:description "Die Basis der Schale. Tonkotsu köchelt achtzehn Stunden."@de ;
+    sh:message "Wähle genau eine Brühe."@de .
+```
+
+This is why the dish property shapes and cross-field constraints are **named** rather than
+inline blank nodes: a translation file needs something to attach to. That change cost some
+verbosity in the shape files and bought a translation model with no code in it at all.
+
+### Only what differs is translated
+
+The fallback chain in `introspect.select_literal` is: exact tag → same language ignoring region
+(`de-CH` → `de`) → English → untagged → anything. So "Nori" and "Ponzu" carry **one** untagged
+label rather than five identical ones, and a German request still resolves them. A half-finished
+translation degrades to English word by word instead of failing.
+
+### The invariant: translation changes only what people read
+
+| Varies with language | Identical in every language |
+|---|---|
+| `title`, `description`, control hints | JSON keys (`sh:name`) |
+| Option labels | Option values (`veganMiso`) |
+| Violation messages | Constraints, defaults, cardinality |
+| Dish name, description, cuisine | The JSON-LD `@context` |
+| | JSON pointers in violations |
+| | The price |
+
+A form rendered in Romansh is validated and priced by the English one, and a client may switch
+language between rendering a form and submitting it without re-mapping anything.
+`tests/contract/test_every_language.py` asserts exactly this, parametrised over the corpus - plus
+a guard that the corpus has not silently degraded to English everywhere, since every other test
+there checks *consistency*, which a monolingual corpus would satisfy perfectly.
+
+Negotiation is `?lang=` first (a deliberate click should beat browser configuration), then
+`Accept-Language`, then English. An unsupported language is not a 400 - asking for Spanish is
+just something this menu does not have.
+
+### What is not translated from the corpus
+
+Two things, both deliberate:
+
+- **The UI chrome** - buttons, headings, the empty state - lives in `frontend/src/i18n.ts`.
+  It is client vocabulary, not dish vocabulary. Putting dish words there would rebuild exactly
+  the coupling this project exists to remove.
+- **One backend string**: the `sh:closed` message. pySHACL generates it, there is no
+  `sh:message` behind it to translate, and its generated text names the internal order IRI. It
+  is the single exception to "messages come from the shapes", and `report.py` says so.
+
+---
+
+## 4. Adding a dish
 
 Two files, no code:
 
@@ -143,7 +210,7 @@ so it is evidence the translator generalises rather than having been fitted to t
 
 ---
 
-## 4. Where Meilisearch fits
+## 5. Where Meilisearch fits
 
 Not in the brief; added because dish discovery is the natural next question and because it
 strengthens the central claim rather than sitting beside it. Search documents are projected
@@ -159,7 +226,7 @@ covered by integration tests against a live instance, which CI runs as a service
 
 ---
 
-## 5. Things I found by running, not assuming
+## 6. Things I found by running, not assuming
 
 Recording these because each was a silent failure, and the second one is the dangerous kind.
 
@@ -186,9 +253,21 @@ internal order IRI, which no client should see.
 wrong shape (`dataPath` rather than `instancePath`). ajv 8 is now an explicit dependency,
 matching what actually executes.
 
+**pySHACL strips the language tag from `sh:sparql` messages** while preserving it for core
+constraints — it runs template substitution and rebuilds the literal, losing the tag. All five
+translations therefore arrived indistinguishable and were concatenated into one sentence.
+`report.py` follows `sh:sourceConstraint` back to the shapes graph and selects the tagged
+literal there instead. The regression test asserts no message exceeds 200 characters, which a
+five-way concatenation comfortably does.
+
+**Message templating and multilingual labels do not mix.** The ramen rule once interpolated
+`{$optionLabel}` into its message. Once the term carried a label in five languages the query
+bound whichever it reached first, unpredictably. The interpolation is gone: the JSON pointer
+already addresses the exact array element, so naming it in prose was redundant anyway.
+
 ---
 
-## 6. Limitations and assumptions
+## 7. Limitations and assumptions
 
 **`sh:name` is read as a field identifier.** The SHACL spec intends it as a human-readable
 label. A form needs one stable token that is at once the JSON key, the JSON-LD term and the
@@ -211,28 +290,39 @@ is the authority on everything.
 own optimistic message, and the vanilla renderers concatenate them. Distinguishable
 programmatically (`keyword: 'shacl'`), not visually.
 
-**Array controls are add-item lists.** The vanilla renderers render an array of enumerated
-options as an add-a-row list rather than a multi-select or a checkbox group. Correct, and
-clumsy. A custom renderer keyed on `type: array` + `items.oneOf` is the fix, and is a frontend
-concern that would need no backend change.
+**The custom renderers are heuristics, and heuristics have edges.** Three of them
+(`frontend/src/renderers/`) match on the *shape* of a schema, never on a field name: an array
+of enumerated values becomes chips, a short enumeration becomes cards, a bounded integer becomes
+a stepper or a slider. The slider/stepper split turns on whether the minimum is zero — a scale
+starts at zero, a count starts at one — which is a real signal but not a guaranteed one. A shape
+that violated it would get the wrong-but-usable control. Making that explicit would mean a
+`food:` annotation for control intent, which starts down the road of putting presentation in the
+vocabulary.
 
 **No persistence, no auth, no rate limiting.** The brief asks for none, and an order that is
 priced rather than stored keeps the demo honest about what it does. The order IRI is minted per
 request and is unique only within that request.
 
-**No i18n.** `rdfs:label` is language-tagged in the vocabulary and the reader takes the first
-label it finds. Honouring an `Accept-Language` header would mean selecting by tag in
-`introspect.py` and varying the form response — contained, but not done.
+**Romansh is machine-translated and unreviewed.** The four national languages are all served,
+but a Rumantsch Grischun speaker should read `data/i18n/rm.ttl` before this is shown to anyone
+as finished. The other three I can vouch for; that one is flagged in the file itself and in
+`AI_USAGE.md`. Coverage there is also deliberately partial — field labels, group labels and
+validation messages, with proper nouns falling through the chain.
+
+**Language is negotiated but not routed.** There is no `/de/…` URL prefix and no
+`Vary: Accept-Language` on cached responses, so a shared cache in front of this API would need
+configuring before it could serve two languages correctly. Fine for a prototype, wrong for
+production.
 
 **Meilisearch relevance is untuned.** Default ranking rules, no synonyms, no stop words. Enough
 to demonstrate the projection; not tuned for a real menu.
 
 ---
 
-## 7. What I would do next, in order
+## 8. What I would do next, in order
 
-1. **A custom JSON Forms array renderer** for enumerated multi-value fields. The single largest
-   usability gap, and purely frontend.
+1. **Have a Romansh speaker review `data/i18n/rm.ttl`**, and complete the option-label coverage
+   in all four languages. The mechanism is finished; the content is not.
 2. **Emit JSON Forms `rule`s for the expressible subset of cross-field constraints**, so
    `sh:sparql` rules that reduce to "hide X when Y" give feedback before submit. The rest stay
    server-only and the write-up says which.

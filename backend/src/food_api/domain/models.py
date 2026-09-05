@@ -30,6 +30,24 @@ class DishSummaryModel(BaseModel):
     allergens: list[str] = Field(default_factory=list)
 
 
+class PricingHint(BaseModel):
+    """Enough for a client to show a running estimate.
+
+    A *hint*, exactly like the JSON Schema: the server prices the order authoritatively on
+    submit, and the receipt is what counts. Exposing it means the surcharges annotated on
+    vocabulary terms reach the browser as data rather than being reimplemented there.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    base_price: float = Field(alias="basePrice")
+    currency: str
+    #: JSON key -> option token -> surcharge.
+    surcharges: dict[str, dict[str, float]] = Field(default_factory=dict)
+    #: The field whose value multiplies the total, from `food:isMultiplier`. May be absent.
+    multiplier_field: str | None = Field(default=None, alias="multiplierField")
+
+
 class FormResponse(BaseModel):
     """Everything needed to render one dish's order form.
 
@@ -51,6 +69,7 @@ class FormResponse(BaseModel):
     #: Every language this API can serve, so a client can build a switcher without a
     #: hardcoded list that could fall out of step with the corpus.
     available_languages: list[str] = Field(default_factory=list, alias="availableLanguages")
+    pricing: PricingHint
 
 
 class OrderRequest(BaseModel):

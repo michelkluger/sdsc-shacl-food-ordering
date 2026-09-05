@@ -12,7 +12,7 @@ from fastapi import APIRouter, Response, status
 
 from food_api.api.deps import CatalogDep, DishDep
 from food_api.api.language import LanguageDep
-from food_api.domain.models import DishSummaryModel, FormResponse
+from food_api.domain.models import DishSummaryModel, FormResponse, PricingHint
 from food_api.shacl.introspect import SUPPORTED_LANGUAGES
 
 router = APIRouter(prefix="/dishes", tags=["dishes"])
@@ -68,17 +68,27 @@ async def get_dish_form(dish: DishDep, language: LanguageDep, response: Response
     and is validated by the same shape as one fetched in English.
     """
     form = dish.form_for(language)
+    summary = dish.summary_for(language)
     response.headers["Content-Language"] = form.language
 
     # Constructed by field name rather than by alias: `populate_by_name` accepts both, and
     # `@context` is not a legal Python identifier so passing it by alias needs kwargs unpacking
     # that no type checker can see through. Serialisation still emits the aliases.
     return FormResponse(
-        dish=DishSummaryModel.model_validate(dish.summary_for(language).as_dict()),
+        dish=DishSummaryModel.model_validate(summary.as_dict()),
         json_schema=form.schema,
         uischema=form.uischema,
         context=form.context,
         shape_iri=str(dish.node_shape),
         language=form.language,
         available_languages=list(SUPPORTED_LANGUAGES),
+        pricing=PricingHint(
+            basePrice=float(summary.base_price),
+            currency=summary.currency,
+            surcharges={
+                field: {token: float(amount) for token, amount in options.items()}
+                for field, options in form.surcharges.items()
+            },
+            multiplierField=form.multiplier_field,
+        ),
     )

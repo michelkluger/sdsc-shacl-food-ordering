@@ -23,17 +23,31 @@ export interface DishSummary {
   allergens: string[]
 }
 
+/** Enough for a running estimate. The server prices the order authoritatively on submit. */
+export interface PricingHint {
+  basePrice: number
+  currency: string
+  surcharges: Record<string, Record<string, number>>
+  multiplierField: string | null
+}
+
 export interface FormDefinition {
   dish: DishSummary
   schema: JsonSchema
   uischema: UISchemaElement
   '@context': Record<string, unknown>
   shapeIri: string
+  /** The language the strings above are in, after negotiation. */
+  language: string
+  /** Every language the server can serve, so the switcher is never a hardcoded list. */
+  availableLanguages: string[]
+  pricing: PricingHint
 }
 
 export interface OrderReceipt {
   orderId: string
   dish: string
+  dishName: string
   accepted: boolean
   total: number
   currency: string
@@ -79,12 +93,25 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+function withLanguage(path: string, language?: string): string {
+  if (!language) return path
+  const separator = path.includes('?') ? '&' : '?'
+  return `${path}${separator}lang=${encodeURIComponent(language)}`
+}
+
+async function request<T>(path: string, language?: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
-    response = await fetch(`${BASE}${path}`, {
+    response = await fetch(`${BASE}${withLanguage(path, language)}`, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        // Sent as well as `?lang=` so the API behaves correctly for any client, including one
+        // that only sets the header. The explicit parameter wins, which is what a user
+        // clicking the switcher means.
+        ...(language ? { 'Accept-Language': language } : {}),
+        ...init?.headers,
+      },
     })
   } catch (cause) {
     // A network failure has no problem document, so synthesise one. Every caller then has a
@@ -116,13 +143,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const listDishes = (): Promise<DishSummary[]> => request<DishSummary[]>('/api/dishes')
+export const listDishes = (language?: string): Promise<DishSummary[]> =>
+  request<DishSummary[]>('/api/dishes', language)
 
-export const getForm = (slug: string): Promise<FormDefinition> =>
-  request<FormDefinition>(`/api/dishes/${encodeURIComponent(slug)}/form`)
+export const getForm = (slug: string, language?: string): Promise<FormDefinition> =>
+  request<FormDefinition>(`/api/dishes/${encodeURIComponent(slug)}/form`, language)
 
-export const submitOrder = (slug: string, data: Record<string, unknown>): Promise<OrderReceipt> =>
-  request<OrderReceipt>(`/api/orders/${encodeURIComponent(slug)}`, {
+export const submitOrder = (
+  slug: string,
+  data: Record<string, unknown>,
+  language?: string,
+): Promise<OrderReceipt> =>
+  request<OrderReceipt>(`/api/orders/${encodeURIComponent(slug)}`, language, {
     method: 'POST',
     body: JSON.stringify({ data }),
   })

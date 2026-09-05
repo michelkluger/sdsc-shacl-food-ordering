@@ -199,6 +199,21 @@ jobs:
           grep -q '"/toppings/0"' /tmp/problem.json
           grep -q '"/spiceLevel"' /tmp/problem.json
 
+      - name: Every dish is served in every supported language
+        run: |
+          for lang in en de fr it rm; do
+            for slug in french-tacos ramen poke-bowl; do
+              curl --fail --silent "http://localhost:8000/api/dishes/$slug/form?lang=$lang"                 | grep -q "\"language\":\"$lang\""                 || { echo "no $lang form for $slug" >&2; exit 1; }
+            done
+          done
+
+      - name: Violation messages are translated
+        run: |
+          curl --silent -X POST 'http://localhost:8000/api/orders/ramen?lang=de'             -H 'content-type: application/json'             -d '{"data":{"broth":"veganMiso","noodleFirmness":"firm","spiceLevel":9,"toppings":["chashu"],"quantity":1,"customerName":"CI"}}'             > /tmp/de.json
+          cat /tmp/de.json
+          grep -q 'Schärfe' /tmp/de.json
+          grep -q 'veganen Brühe' /tmp/de.json
+
       - name: Search returns indexed dishes
         run: |
           curl --fail --silent 'http://localhost:8000/api/search?q=poke' \

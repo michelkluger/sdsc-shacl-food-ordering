@@ -85,6 +85,8 @@ class PropertyConstraints:
     group: PropertyGroup | None = None
     order: Decimal | None = None
     message: str | None = None
+    #: True when this field's value multiplies the order total (see food:isMultiplier).
+    is_multiplier: bool = False
 
     @property
     def is_required(self) -> bool:
@@ -272,6 +274,7 @@ def _read_property(graph: Graph, property_shape: Node, language: str) -> Propert
         pattern=str(_one(graph, property_shape, SH.pattern) or "") or None,
         default=_scalar(_one(graph, property_shape, SH.defaultValue)),
         group=_read_group(graph, property_shape, language),
+        is_multiplier=bool(_one(graph, path, FOOD.isMultiplier)),
         order=_decimal(graph, property_shape, SH.order),
         message=message,
     )

@@ -106,7 +106,11 @@ def price_order(dish: Dish, payload: dict[str, Any]) -> Decimal:
         for token in tokens:
             total += per_token.get(str(token), Decimal(0))
 
-    quantity = payload.get("quantity", 1)
-    if isinstance(quantity, int) and quantity > 0:
-        total *= quantity
+    # Which field multiplies the total comes from the vocabulary (food:isMultiplier), not from
+    # a field name written here. A dish that declares no multiplier is simply priced once.
+    multiplier_field = dish.form.multiplier_field
+    if multiplier_field:
+        multiplier = payload.get(multiplier_field, 1)
+        if isinstance(multiplier, int) and multiplier > 0:
+            total *= multiplier
     return total.quantize(Decimal("0.01"))

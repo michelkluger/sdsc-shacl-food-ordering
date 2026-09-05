@@ -65,9 +65,17 @@ food:dish a rdf:Property ;
     rdfs:label "Dish"@en ;
     rdfs:comment "The dish being ordered. Set by the server from the URL, never by the client."@en .
 
+food:isMultiplier a rdf:Property ;
+    rdfs:label "Is multiplier"@en ;
+    rdfs:comment "Marks the property whose value multiplies the order total."@en ;
+    rdfs:range xsd:boolean .
+
 food:quantity a rdf:Property ;
     rdfs:label "Quantity"@en ;
-    rdfs:range xsd:integer .
+    rdfs:range xsd:integer ;
+    # Which field multiplies the total is a fact about the vocabulary, not something Python
+    # should know by name. price_order() reads this rather than looking for "quantity".
+    food:isMultiplier true .
 
 food:customerName a rdf:Property ;
     rdfs:label "Your name"@en ;

@@ -2,7 +2,10 @@
 
 A food-ordering service whose **entire form logic lives in JSON-LD documents and SHACL shapes**.
 The backend generates the form a client renders, and validates what comes back, from the same
-shape. Adding a dish means adding two data files — no code, no route, no frontend change.
+shape, in five languages.
+
+Adding a dish is adding two data files. Adding a language is adding one. Neither needs a line of
+code, a route, or a frontend change.
 
 > SDSC Software R&D Engineer task 5. See [`DESIGN.md`](DESIGN.md) for the modelling decisions and
 > [`AI_USAGE.md`](AI_USAGE.md) for the mandatory AI usage disclaimer.
@@ -50,7 +53,7 @@ On Windows PowerShell: `./scripts/setup.ps1`, `./scripts/dev.ps1`, `./scripts/ch
 **Verify it works:**
 
 ```bash
-./scripts/check.sh          # ruff, ty, 100 backend tests, 16 frontend tests, coverage gate
+./scripts/check.sh          # ruff, ty, backend tests, frontend tests, coverage gate
 ./scripts/check.sh --all    # also the integration tests against a live Meilisearch
 ```
 
@@ -103,6 +106,38 @@ curl 'localhost:8000/api/search?q=cashew'          # → poke-bowl
 curl 'localhost:8000/api/search?allergenFree=fish&diet=vegan-available'
 ```
 
+### In five languages
+
+```bash
+curl -H 'Accept-Language: rm' localhost:8000/api/dishes/poke-bowl/form   | jq '[.schema.properties[].title]'
+#  ["Basa","Proteina","Salsa","Croccant","Quantitad","Tes num","Ura da retratga",…]
+
+curl -X POST 'localhost:8000/api/orders/ramen?lang=de' -H 'content-type: application/json'      -d '{"data":{"broth":"veganMiso","noodleFirmness":"firm","spiceLevel":9,
+                  "toppings":["chashu"],"quantity":1,"customerName":"Du"}}' | jq '.violations[].message'
+#  "Die Schärfe reicht von 0 bis 5."
+#  "Dieses Topping gibt es nicht zur veganen Brühe."
+```
+
+German, French, Italian, **Romansh** and English. Only what people *read* changes: the JSON
+keys, the option values, the constraints and the price are identical in every language, so a
+form rendered in Romansh is validated and priced by the English one.
+
+---
+
+## Adding a language
+
+One file, `backend/src/food_api/data/i18n/<lang>.ttl`. It declares nothing — it attaches
+language-tagged literals to terms and shapes that already exist:
+
+```turtle
+food:RamenBrothProperty
+    rdfs:label "Brühe"@de ;
+    sh:message "Wähle genau eine Brühe."@de .
+```
+
+Only what genuinely differs needs translating. "Nori" is called Nori in all five, so it keeps
+one untagged label and the fallback chain resolves it.
+
 ---
 
 ## Adding a dish
@@ -140,13 +175,17 @@ being written for it.
 Every error — unknown dish, malformed body, constraint violation, search outage — uses one
 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem-details envelope.
 
+Every endpoint that returns readable text negotiates language via `?lang=` or `Accept-Language`,
+and echoes the result in `Content-Language`.
+
 ---
 
 ## Layout
 
 ```
 backend/src/food_api/
-  data/          vocab/ · shapes/ · context/ · dishes/{french-tacos,ramen,poke-bowl}/
+  data/          vocab/ · shapes/ · context/ · i18n/{de,fr,it,rm}.ttl
+                 dishes/{french-tacos,ramen,poke-bowl}/
   catalog/       filesystem discovery; the registry IS the directory listing
   shacl/         introspect → jsonforms → validate → report
   jsonld/        lift a payload into RDF with the generated context
@@ -154,6 +193,7 @@ backend/src/food_api/
   api/           routers; no dish-specific branch anywhere
 backend/tests/   unit · contract (parametrised over every dish) · api · integration
 frontend/src/    React + @jsonforms/react; no dish-specific branch anywhere
+  renderers/     chips, option cards, stepper/slider — matched on schema shape, never on a name
 scripts/         setup · dev · check, in Bash and PowerShell
 ```
 
@@ -168,8 +208,8 @@ The setup scripts are thin on purpose: they check prerequisites and delegate to 
 |---|---|
 | Lint | `ruff` — ~20 rule families incl. bugbear, bandit, pylint, pathlib |
 | Types | `ty` (Astral) on `src` and `tests` |
-| Backend tests | 100, coverage gate at 85% (currently 93%) |
-| Frontend | eslint + `tsc --noEmit` + 16 vitest tests |
+| Backend tests | 378, coverage gate at 85% |
+| Frontend | eslint + `tsc --noEmit` + 33 vitest tests |
 | CI | 4 jobs: lint · tests (Meilisearch **service container**, so integration tests really run) · frontend · a Docker stack smoke test that re-checks this README's claims |
 
 ---
@@ -180,18 +220,23 @@ The setup scripts are thin on purpose: they check prerequisites and delegate to 
 
 - the derivation of schema + UI schema + JSON-LD context from one shape, and the reverse
   mapping that gives every violation a JSON pointer;
+- making a language cost one file, in a country with four of them;
 - constraints worth validating — cardinality, enumerations, ranges, closure, and one
   `sh:sparql` cross-field rule per dish that no JSON Schema can express;
 - making "add a dish without touching code" a tested property rather than a claim;
 - reproducibility: one command from a clean clone, and CI that would catch it regressing.
 
-**Left out deliberately:** persistence, auth, i18n, and Meilisearch relevance tuning. The brief
-asks for none of them and each would have cost time better spent on the modelling.
+**Left out deliberately:** persistence, auth, and Meilisearch relevance tuning. The brief asks
+for none of them and each would have cost time better spent on the modelling.
 
-**Known limitations** are listed honestly in [`DESIGN.md` §6](DESIGN.md) — including the
+**Known limitations** are listed honestly in [`DESIGN.md` §7](DESIGN.md) — including the
 `sh:name` deviation from the SHACL spec, the fact that cross-field rules cannot reach the client
-before submission, and the clumsy array control the vanilla renderers produce. [§7](DESIGN.md)
-lists what I would do next, in order.
+before submission, and that the Romansh translation is unreviewed. [§8](DESIGN.md) lists what I
+would do next, in order.
+
+The visual language is borrowed from [datascience.ch](https://datascience.ch): their indigo
+(`#5561a6`), deep navy (`#26235c`), pale lilac ground and Space Grotesk headings, read from
+their stylesheet rather than eyeballed.
 
 ---
 
