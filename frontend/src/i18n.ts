@@ -72,6 +72,11 @@ interface Strings {
   themeLight: string
   themeDark: string
   searchPlaceholder: string
+  diet: string
+  withoutAllergen: string
+  clearFilters: string
+  noDishesFound: string
+  searchUnavailable: string
   /** `{n}` is replaced with the count. */
   atMost: string
   atLeast: string
@@ -116,6 +121,11 @@ const en: Strings = {
   themeLight: 'Light',
   themeDark: 'Dark',
   searchPlaceholder: 'Search dishes…',
+  diet: 'Diet',
+  withoutAllergen: 'Without',
+  clearFilters: 'Clear filters',
+  noDishesFound: 'No dishes match.',
+  searchUnavailable: 'Search is unavailable; showing the whole menu.',
   atMost: 'at most {n}',
   atLeast: 'at least {n}',
 }
@@ -159,6 +169,11 @@ const de: Strings = {
   themeLight: 'Hell',
   themeDark: 'Dunkel',
   searchPlaceholder: 'Gerichte suchen…',
+  diet: 'Ernährung',
+  withoutAllergen: 'Ohne',
+  clearFilters: 'Filter zurücksetzen',
+  noDishesFound: 'Keine passenden Gerichte.',
+  searchUnavailable: 'Suche nicht verfügbar; es wird das ganze Menü gezeigt.',
   atMost: 'höchstens {n}',
   atLeast: 'mindestens {n}',
 }
@@ -202,6 +217,11 @@ const fr: Strings = {
   themeLight: 'Clair',
   themeDark: 'Sombre',
   searchPlaceholder: 'Rechercher des plats…',
+  diet: 'Régime',
+  withoutAllergen: 'Sans',
+  clearFilters: 'Réinitialiser',
+  noDishesFound: 'Aucun plat ne correspond.',
+  searchUnavailable: 'Recherche indisponible ; tout le menu est affiché.',
   atMost: 'au maximum {n}',
   atLeast: 'au minimum {n}',
 }
@@ -245,6 +265,11 @@ const it: Strings = {
   themeLight: 'Chiaro',
   themeDark: 'Scuro',
   searchPlaceholder: 'Cerca piatti…',
+  diet: 'Dieta',
+  withoutAllergen: 'Senza',
+  clearFilters: 'Azzera i filtri',
+  noDishesFound: 'Nessun piatto corrisponde.',
+  searchUnavailable: 'Ricerca non disponibile; viene mostrato tutto il menu.',
   atMost: 'al massimo {n}',
   atLeast: 'almeno {n}',
 }
@@ -288,6 +313,11 @@ const rm: Strings = {
   themeLight: 'Cler',
   themeDark: 'Stgir',
   searchPlaceholder: 'Tschertgar plats…',
+  diet: 'Nutriment',
+  withoutAllergen: 'Senza',
+  clearFilters: 'Reinizialisar ils filters',
+  noDishesFound: 'Nagins plats correspundents.',
+  searchUnavailable: 'Tschertga betg disponibla; vegn mussà tut il menu.',
   atMost: 'maximalmain {n}',
   atLeast: 'almain {n}',
 }

@@ -49,7 +49,7 @@ sitting beside it, and each is a claim the tests hold to.
 
 | Addition | Why it belongs | Evidence |
 |---|---|---|
-| **Meilisearch**, in Docker | Search documents are projected from the loaded catalogue including option labels, so a new dish is searchable with no indexing rule written for it | `search/indexer.py`; `GET /api/search?q=cashew` → poke-bowl |
+| **Meilisearch**, in Docker | Search documents are projected from the loaded catalogue including option labels, so a new dish is searchable with no indexing rule written for it. Surfaced in the UI as the dish rail's search box and facet filters, which are built from the facets the response returns | `search/indexer.py`, `frontend/src/DishBrowser.tsx`; `GET /api/search?q=cashew` → poke-bowl |
 | **Five languages** — DE, FR, IT, RM, EN | A language costs one `i18n/<lang>.ttl` file that declares nothing and changes no code, mirroring "a dish costs two files" | `tests/contract/test_every_language.py`, 15 dish×language combinations checked in CI |
 | **Custom JSON Forms renderers** | The vanilla array control needed an "add row" click per value; these match on schema *shape* — array-of-enum, short enum, bounded integer, date-time — never on a field name | `frontend/src/renderers/`, tested against an invented dish |
 | **A sticky order summary** | The total was only visible at the bottom of the form; it is now beside it, with a line per priced choice, labelled from the schema the server sent | `frontend/src/OrderSummary.tsx`, `pricing.ts` |
@@ -65,7 +65,7 @@ sitting beside it, and each is a claim the tests hold to.
 | **Backend architecture** — clean, well-structured SHACL/JSON-LD processing, easy to extend | One pipeline: `introspect → jsonforms → lift → validate → report`. `introspect.py` is the only module that touches an rdflib graph; everything downstream consumes dataclasses. Extension point is a directory, not a function |
 | **Separation of concerns** — a new dish needs no frontend change or hardcoded frontend logic | Commit `7cf2f2f` is two data files. `git show --name-only 7cf2f2f \| grep -v '^backend/src/food_api/data/'` returns nothing |
 | **Validation** — meaningful, with clear structured errors | Every constraint class exercised, incl. three `sh:sparql` cross-field rules. Errors carry a JSON pointer to the offending array *element*, the constraint component, the value, and the shape's own `sh:message` |
-| **Approach to testing** — evidence valid and invalid submissions were tested | 378 backend + 72 frontend tests. 22 order fixtures across 3 dishes, each invalid one declaring the pointer and constraint it must trigger, exercised in all 5 languages. Integration tests run against real Meilisearch in CI |
+| **Approach to testing** — evidence valid and invalid submissions were tested | 378 backend + 86 frontend tests. 22 order fixtures across 3 dishes, each invalid one declaring the pointer and constraint it must trigger, exercised in all 5 languages. Integration tests run against real Meilisearch in CI |
 | **Reproducibility** — clone and run without guesswork | One command. Prerequisites are checked with actionable messages; every version is pinned; CI builds the stack from scratch and smoke-tests it |
 
 ---
@@ -93,7 +93,7 @@ sitting beside it, and each is a claim the tests hold to.
 | Formatting | `ruff format` — checked in CI |
 | Linting | `ruff` with ~20 rule families (bugbear, bandit, pylint, pathlib, comprehensions…) |
 | Type checking | `ty` on `src` and `tests`, clean with no blanket ignores |
-| Tests | 378 backend (unit · contract · API · integration), 72 frontend |
+| Tests | 378 backend (unit · contract · API · integration), 86 frontend |
 | Coverage | Gate at 85% |
 | CI | 4 jobs incl. a Docker stack smoke test that re-verifies the README's claims — every dish in every language — on every push |
 | Pre-commit | `.pre-commit-config.yaml` — fast checks only |

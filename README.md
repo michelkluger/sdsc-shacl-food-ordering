@@ -106,6 +106,11 @@ curl 'localhost:8000/api/search?q=cashew'          # → poke-bowl
 curl 'localhost:8000/api/search?allergenFree=fish&diet=vegan-available'
 ```
 
+This is what the dish rail in the UI calls. Its filter chips are built from the facet counts the
+response carries, so a dish contributing a new diet or allergen adds a filter with no frontend
+change. Stop the Meilisearch container and the rail falls back to `/api/dishes`, hides the
+filters and says why — forms and ordering keep working.
+
 ### In five languages
 
 ```bash
@@ -195,6 +200,7 @@ backend/tests/   unit · contract (parametrised over every dish) · api · integ
 frontend/src/    React + @jsonforms/react; no dish-specific branch anywhere
   renderers/     chips · option cards · stepper/slider · date-time with a "Now" button —
                  every one matched on schema shape, never on a field name
+  DishBrowser    search box + facet filters, built from the facets the server returns
   OrderSummary   sticky running total, priced from the server's `pricing` block
   theme.ts       light / dark / follow-system, remembered per browser
 scripts/         setup · dev · check, in Bash and PowerShell
@@ -212,7 +218,7 @@ The setup scripts are thin on purpose: they check prerequisites and delegate to 
 | Lint | `ruff` — ~20 rule families incl. bugbear, bandit, pylint, pathlib |
 | Types | `ty` (Astral) on `src` and `tests` |
 | Backend tests | 378, coverage gate at 85% |
-| Frontend | eslint + `tsc --noEmit` + 72 vitest tests |
+| Frontend | eslint + `tsc --noEmit` + 86 vitest tests |
 | CI | 4 jobs: lint · tests (Meilisearch **service container**, so integration tests really run) · frontend · a Docker stack smoke test that re-checks this README's claims |
 
 ---

@@ -30,5 +30,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
+# 127.0.0.1 rather than `localhost`: the latter resolves to ::1 first in this image, which
+# reported the container unhealthy while it was serving pages happily.
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --quiet --spider http://localhost/ || exit 1
+    CMD wget --quiet --spider http://127.0.0.1/ || exit 1

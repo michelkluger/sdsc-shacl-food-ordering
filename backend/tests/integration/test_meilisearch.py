@@ -16,7 +16,7 @@ from collections.abc import AsyncIterator
 from contextlib import suppress
 
 import pytest
-from meilisearch_python_sdk import AsyncClient
+from meilisearch_python_sdk import AsyncClient, Client
 from meilisearch_python_sdk.errors import MeilisearchError
 
 from food_api.catalog.registry import Catalog
@@ -25,6 +25,33 @@ from food_api.search.client import MeilisearchSearch
 from food_api.search.indexer import catalog_documents
 
 pytestmark = pytest.mark.integration
+
+
+#: Throwaway indexes are named `dishes_test_<random>`; nothing else may use this prefix.
+TEST_INDEX_PREFIX = "dishes_test_"
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _sweep_stale_indexes(settings: Settings) -> None:
+    """Drop any throwaway index left behind by an earlier run.
+
+    Each test cleans up after itself, but a run killed with Ctrl-C never reaches its teardown,
+    and those indexes then accumulate in a developer's container indefinitely. Sweeping at the
+    start makes the suite self-healing rather than relying on every run finishing politely.
+
+    Synchronous on purpose: a module-scoped *async* fixture would need its own event loop scope,
+    and this has no reason to share one with the tests.
+    """
+    with (
+        suppress(MeilisearchError, OSError),
+        Client(
+            settings.meili_url, settings.meili_master_key, timeout=settings.meili_timeout_seconds
+        ) as client,
+    ):
+        for index in client.get_indexes(limit=200) or []:
+            if index.uid.startswith(TEST_INDEX_PREFIX):
+                with suppress(MeilisearchError, OSError):
+                    client.index(index.uid).delete()
 
 
 @pytest.fixture
@@ -38,7 +65,7 @@ async def live_search(
     pass or fail for the wrong reason, and the index is dropped afterwards so a CI service
     container is not slowly filled with orphans.
     """
-    index_name = f"dishes_test_{uuid.uuid4().hex[:8]}"
+    index_name = f"{TEST_INDEX_PREFIX}{uuid.uuid4().hex[:8]}"
     client = AsyncClient(
         settings.meili_url,
         settings.meili_master_key,

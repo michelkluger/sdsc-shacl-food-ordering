@@ -143,8 +143,38 @@ async function request<T>(path: string, language?: string, init?: RequestInit): 
   return response.json() as Promise<T>
 }
 
+/** Facet counts, keyed by attribute then by value. */
+export type Facets = Record<string, Record<string, number>>
+
+export interface SearchResults {
+  query: string
+  hits: DishSummary[]
+  estimatedTotal: number
+  facets: Facets
+}
+
+export interface SearchParams {
+  q?: string
+  diet?: string
+  allergenFree?: string[]
+}
+
 export const listDishes = (language?: string): Promise<DishSummary[]> =>
   request<DishSummary[]>('/api/dishes', language)
+
+export const searchDishes = (
+  { q = '', diet, allergenFree = [] }: SearchParams,
+  language?: string,
+): Promise<SearchResults> => {
+  const query = new URLSearchParams()
+  if (q) query.set('q', q)
+  if (diet) query.set('diet', diet)
+  // Repeated rather than comma-joined: the API declares allergenFree as a list parameter.
+  for (const allergen of allergenFree) query.append('allergenFree', allergen)
+
+  const suffix = query.toString()
+  return request<SearchResults>(`/api/search${suffix ? `?${suffix}` : ''}`, language)
+}
 
 export const getForm = (slug: string, language?: string): Promise<FormDefinition> =>
   request<FormDefinition>(`/api/dishes/${encodeURIComponent(slug)}/form`, language)

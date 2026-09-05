@@ -9,8 +9,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { ApiError, listDishes } from './api'
 import type { DishSummary } from './api'
+import { DishBrowser } from './DishBrowser'
 import { DishForm } from './DishForm'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ThemeToggle } from './ThemeToggle'
@@ -20,15 +20,9 @@ import { applyTheme, initialTheme, rememberTheme } from './theme'
 import type { Theme } from './theme'
 import { UiContext } from './ui-context'
 
-type State =
-  | { kind: 'loading' }
-  | { kind: 'ready'; dishes: DishSummary[] }
-  | { kind: 'failed'; title: string; detail: string }
-
 export function App() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [theme, setTheme] = useState<Theme>(initialTheme)
-  const [state, setState] = useState<State>({ kind: 'loading' })
   const [selected, setSelected] = useState<string | null>(null)
 
   const t = useMemo(() => translator(language), [language])
@@ -42,29 +36,15 @@ export function App() {
     applyTheme(theme)
   }, [theme])
 
-  useEffect(() => {
-    let cancelled = false
-
-    listDishes(language)
-      .then((dishes) => {
-        if (cancelled) return
-        setState({ kind: 'ready', dishes })
-        setSelected((current) => current ?? dishes[0]?.slug ?? null)
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        const problem = error instanceof ApiError ? error.problem : null
-        setState({
-          kind: 'failed',
-          title: problem?.title ?? t('menuFailed'),
-          detail: problem?.status === 0 ? t('apiUnreachable') : (problem?.detail ?? t('menuFailed')),
-        })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [language, t])
+  // The browser owns fetching; this only keeps a valid dish selected as results change, so a
+  // filter that excludes the current dish moves the form to the first result rather than
+  // leaving a form on screen for something no longer in the list.
+  const handleDishes = useCallback((dishes: DishSummary[]) => {
+    setSelected((current) => {
+      if (current && dishes.some((dish) => dish.slug === current)) return current
+      return dishes[0]?.slug ?? null
+    })
+  }, [])
 
   const changeLanguage = useCallback((next: Language) => {
     setLanguage(next)
@@ -99,55 +79,10 @@ export function App() {
             <p>{t('appLead')}</p>
           </section>
 
-          {state.kind === 'loading' && (
-            <div className="panel panel--placeholder" aria-busy="true">
-              <span className="spinner" aria-hidden="true" />
-              {t('loadingMenu')}
-            </div>
-          )}
-
-          {state.kind === 'failed' && (
-            <div className="panel notice notice--error" role="alert">
-              <strong>{state.title}</strong>
-              <p>{state.detail}</p>
-            </div>
-          )}
-
-          {state.kind === 'ready' && (
-            <div className="layout">
-              <nav className="dishes" aria-label={t('chooseDish')}>
-                <h2 className="dishes__title">{t('chooseDish')}</h2>
-                {state.dishes.map((dish) => (
-                  <button
-                    key={dish.slug}
-                    type="button"
-                    className={`dish${dish.slug === selected ? ' dish--on' : ''}`}
-                    aria-current={dish.slug === selected ? 'true' : undefined}
-                    onClick={() => setSelected(dish.slug)}
-                  >
-                    <span className="dish__name">{dish.name}</span>
-                    <span className="dish__meta">
-                      <span className="dish__cuisine">{dish.cuisine}</span>
-                      <span className="dish__price">
-                        {t('from')} {dish.basePrice.toFixed(2)} {dish.currency}
-                      </span>
-                    </span>
-                    {dish.tags.length > 0 && (
-                      <span className="dish__tags">
-                        {dish.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </nav>
-
-              {selected && <DishForm key={selected} slug={selected} />}
-            </div>
-          )}
+          <div className="layout">
+            <DishBrowser selected={selected} onSelect={setSelected} onDishes={handleDishes} />
+            {selected && <DishForm key={selected} slug={selected} />}
+          </div>
         </main>
 
         <footer className="footer">

@@ -225,9 +225,18 @@ from the loaded catalogue, including option labels pulled out of the shapes — 
 becomes searchable, by name and by anything it merely *offers*, with no indexing rule written
 for it. `GET /api/search?q=cashew` returns the poke bowl.
 
+**Where it surfaces.** `frontend/src/DishBrowser.tsx` — the dish rail is a search box plus
+filter chips, and those chips are built from the **facet counts the response returns**, not from
+a list written in the client. A new dish contributing a new diet or allergen produces a new
+filter with nothing added to the frontend, which is the same property the rest of the system
+has.
+
 It sits behind a `SearchPort` protocol. The API and unit suites run against an in-memory fake
 and need no container; a real outage degrades `/api/search` to a 503 problem document and
 leaves forms and ordering working, which `/healthz` reports as `degraded` rather than down.
+The UI makes that visible rather than only asserting it: on a 503 the browser falls back to
+`/api/dishes`, hides the filters and says why. Verified by stopping the container — search
+returns 503, the menu still lists, a form still loads, and an order still returns 201.
 Anything depending on real relevance — typo tolerance, filter syntax, index settings — is
 covered by integration tests against a live instance, which CI runs as a service container.
 

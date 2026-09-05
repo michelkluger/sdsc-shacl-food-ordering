@@ -20,10 +20,12 @@ services:
     volumes:
       - meili_data:/meili_data
     healthcheck:
-      # /health is Meilisearch's own readiness endpoint and needs no key. Verified that this
+      # /health is Meilisearch's own readiness endpoint and needs no key. Addressed as
+      # 127.0.0.1 rather than `localhost`, which resolves to ::1 first in these images while
+      # the servers bind IPv4 - that mismatch reports a healthy container as unhealthy. Verified that this
       # image ships curl at /usr/bin/curl - a healthcheck that silently fails to execute leaves
       # `condition: service_healthy` hanging until the compose timeout.
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:7700/health"]
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:7700/health"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -45,7 +47,7 @@ services:
       meilisearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/healthz')"]
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/healthz')"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -373,21 +373,108 @@ button {
 
 /* ---------------------------------------------------------- dish picker */
 
-.dishes {
+.browser {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   position: sticky;
   top: 5rem;
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+  /* Room for the scrollbar so it does not sit on top of the dish cards. */
+  padding-right: 0.25rem;
 }
 
 @media (max-width: 56rem) {
-  .dishes {
+  .browser {
     position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 
-.dishes__title {
+.browser__input {
+  width: 100%;
+  max-width: none;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.browser__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.facet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.facet__name {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.facet__values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.facet__chip {
+  font-size: 0.72rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.facet__chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.facet__chip--on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.browser__reset {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.browser__note,
+.browser__degraded {
+  margin: 0.25rem 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.browser__degraded {
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid var(--line-strong);
+}
+
+.browser__title {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.09em;
