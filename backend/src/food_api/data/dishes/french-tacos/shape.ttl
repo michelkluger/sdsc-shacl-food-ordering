@@ -24,79 +24,18 @@ food:FrenchTacosOrderShape a sh:NodeShape ;
                 food:CustomerNoteProperty ;
 
     # ---- size -----------------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:size ;
-        sh:name "size" ;
-        rdfs:label "Size" ;
-        sh:description "Tortilla size. Bigger tortillas hold more filling." ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:in ( food:M food:L food:XL ) ;
-        sh:defaultValue food:M ;
-        sh:group food:CoreGroup ;
-        sh:order 1 ;
-        sh:message "Pick one size: M, L or XL." ;
-    ] ;
+    sh:property food:TacosSizeProperty ;
 
     # ---- meats: 1..2, the cardinality the cross-field rule keys on -------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:meat ;
-        sh:name "meats" ;
-        rdfs:label "Meat" ;
-        sh:description "Choose one or two. A second meat needs an XL tortilla." ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 2 ;
-        sh:in ( food:kebab food:cordonBleu food:nuggets food:merguez food:falafel ) ;
-        sh:group food:CoreGroup ;
-        sh:order 2 ;
-        sh:message "Choose at least one meat, and no more than two." ;
-    ] ;
+    sh:property food:TacosMeatsProperty ;
 
     # ---- sauces: 0..3 ---------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:sauce ;
-        sh:name "sauces" ;
-        rdfs:label "Sauces" ;
-        sh:description "Up to three sauces. They are mixed into the filling, not served on the side." ;
-        sh:nodeKind sh:IRI ;
-        sh:maxCount 3 ;
-        sh:in ( food:algerienne food:samurai food:bbq food:ketchup food:mayo food:harissa ) ;
-        sh:group food:CoreGroup ;
-        sh:order 3 ;
-        sh:message "Pick at most three sauces." ;
-    ] ;
+    sh:property food:TacosSaucesProperty ;
 
     # ---- extras ---------------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:extraCheese ;
-        sh:name "extraCheese" ;
-        rdfs:label "Extra cheese sauce" ;
-        sh:description "A second ladle of cheese sauce." ;
-        sh:datatype xsd:boolean ;
-        sh:maxCount 1 ;
-        sh:defaultValue false ;
-        sh:group food:ExtrasGroup ;
-        sh:order 4 ;
-    ] ;
+    sh:property food:TacosExtraCheeseProperty ;
 
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:supplement ;
-        sh:name "supplement" ;
-        rdfs:label "Side" ;
-        sh:description "Something on the side." ;
-        sh:nodeKind sh:IRI ;
-        sh:maxCount 1 ;
-        sh:in ( food:fries food:onionRings ) ;
-        sh:group food:ExtrasGroup ;
-        sh:order 5 ;
-    ] ;
+    sh:property food:TacosSupplementProperty ;
 
     # ---- cross-field rule -----------------------------------------------
     #
@@ -104,25 +43,96 @@ food:FrenchTacosOrderShape a sh:NodeShape ;
     # expressed in JSON Schema draft-07 as JSON Forms consumes it, which is precisely why the
     # backend, not the form schema, is the authority on validity.
     #
-    sh:sparql [
-        a sh:SPARQLConstraint ;
-        rdfs:label "Two meats require XL"@en ;
-        sh:message "Two meats only fit in an XL tortilla - pick XL, or drop one meat." ;
-        sh:prefixes food:prefixes ;
-        sh:select """
-            SELECT $this ?path ?value
-            WHERE {
-                # ?path gives the result a sh:resultPath, so the message lands on the size
-                # control rather than on the form as a whole.
-                BIND (food:size AS ?path)
-                $this food:size ?value .
-                FILTER (?value != food:XL)
-                {
-                    SELECT $this (COUNT(DISTINCT ?meat) AS ?meatCount)
-                    WHERE { $this food:meat ?meat . }
-                    GROUP BY $this
-                }
-                FILTER (?meatCount > 1)
+    sh:sparql food:TacosTwoMeatsConstraint .
+
+
+#
+# Property shapes, named rather than inline so that data/i18n/<lang>.ttl can attach
+# language-tagged labels, descriptions and messages to them without touching this file.
+#
+
+food:TacosSizeProperty a sh:PropertyShape ;
+    sh:path food:size ;
+    sh:name "size" ;
+    rdfs:label "Size" ;
+    sh:description "Tortilla size. Bigger tortillas hold more filling." ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( food:M food:L food:XL ) ;
+    sh:defaultValue food:M ;
+    sh:group food:CoreGroup ;
+    sh:order 1 ;
+    sh:message "Pick one size: M, L or XL." .
+
+food:TacosMeatsProperty a sh:PropertyShape ;
+    sh:path food:meat ;
+    sh:name "meats" ;
+    rdfs:label "Meat" ;
+    sh:description "Choose one or two. A second meat needs an XL tortilla." ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 2 ;
+    sh:in ( food:kebab food:cordonBleu food:nuggets food:merguez food:falafel ) ;
+    sh:group food:CoreGroup ;
+    sh:order 2 ;
+    sh:message "Choose at least one meat, and no more than two." .
+
+food:TacosSaucesProperty a sh:PropertyShape ;
+    sh:path food:sauce ;
+    sh:name "sauces" ;
+    rdfs:label "Sauces" ;
+    sh:description "Up to three sauces. They are mixed into the filling, not served on the side." ;
+    sh:nodeKind sh:IRI ;
+    sh:maxCount 3 ;
+    sh:in ( food:algerienne food:samurai food:bbq food:ketchup food:mayo food:harissa ) ;
+    sh:group food:CoreGroup ;
+    sh:order 3 ;
+    sh:message "Pick at most three sauces." .
+
+food:TacosExtraCheeseProperty a sh:PropertyShape ;
+    sh:path food:extraCheese ;
+    sh:name "extraCheese" ;
+    rdfs:label "Extra cheese sauce" ;
+    sh:description "A second ladle of cheese sauce." ;
+    sh:datatype xsd:boolean ;
+    sh:maxCount 1 ;
+    sh:defaultValue false ;
+    sh:group food:ExtrasGroup ;
+    sh:order 4 .
+
+food:TacosSupplementProperty a sh:PropertyShape ;
+    sh:path food:supplement ;
+    sh:name "supplement" ;
+    rdfs:label "Side" ;
+    sh:description "Something on the side." ;
+    sh:nodeKind sh:IRI ;
+    sh:maxCount 1 ;
+    sh:in ( food:fries food:onionRings ) ;
+    sh:group food:ExtrasGroup ;
+    sh:order 5 .
+
+
+#
+# Cross-field constraint, named so that data/i18n/<lang>.ttl can translate its message.
+#
+food:TacosTwoMeatsConstraint a sh:SPARQLConstraint ;
+    rdfs:label "Two meats require XL"@en ;
+    sh:message "Two meats only fit in an XL tortilla - pick XL, or drop one meat." ;
+    sh:prefixes food:prefixes ;
+    sh:select """
+        SELECT $this ?path ?value
+        WHERE {
+            # ?path gives the result a sh:resultPath, so the message lands on the size control
+            # rather than on the form as a whole.
+            BIND (food:size AS ?path)
+            $this food:size ?value .
+            FILTER (?value != food:XL)
+            {
+                SELECT $this (COUNT(DISTINCT ?meat) AS ?meatCount)
+                WHERE { $this food:meat ?meat . }
+                GROUP BY $this
             }
-        """ ;
-    ] .
+            FILTER (?meatCount > 1)
+        }
+    """ .

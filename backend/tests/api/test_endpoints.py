@@ -181,3 +181,107 @@ async def test_openapi_document_is_served(client: AsyncClient) -> None:
     response = await client.get("/api/openapi.json")
     assert response.status_code == HTTP_OK
     assert "/api/orders/{slug}" in response.json()["paths"]
+
+
+# ---------------------------------------------------------------------------
+# Language negotiation over HTTP
+# ---------------------------------------------------------------------------
+
+
+async def test_form_defaults_to_english(client: AsyncClient) -> None:
+    response = await client.get("/api/dishes/ramen/form")
+    assert response.json()["language"] == "en"
+    assert response.headers["content-language"] == "en"
+
+
+async def test_form_honours_accept_language(client: AsyncClient) -> None:
+    response = await client.get(
+        "/api/dishes/ramen/form", headers={"Accept-Language": "de-CH,de;q=0.9,en;q=0.5"}
+    )
+    body = response.json()
+
+    assert body["language"] == "de"
+    assert body["schema"]["properties"]["broth"]["title"] == "Brühe"
+    assert response.headers["content-language"] == "de"
+
+
+async def test_lang_query_parameter_beats_the_header(client: AsyncClient) -> None:
+    """The switcher must win over the browser's configuration."""
+    response = await client.get(
+        "/api/dishes/ramen/form", params={"lang": "rm"}, headers={"Accept-Language": "de"}
+    )
+    assert response.json()["language"] == "rm"
+
+
+async def test_unsupported_language_degrades_to_english_rather_than_erroring(
+    client: AsyncClient,
+) -> None:
+    response = await client.get("/api/dishes/ramen/form", params={"lang": "es"})
+    assert response.status_code == HTTP_OK
+    assert response.json()["language"] == "en"
+
+
+async def test_form_advertises_every_available_language(client: AsyncClient) -> None:
+    """So a client can build a switcher without a hardcoded list that could fall out of step."""
+    body = (await client.get("/api/dishes/ramen/form")).json()
+    assert set(body["availableLanguages"]) == {"en", "de", "fr", "it", "rm"}
+
+
+async def test_dish_list_is_translated(client: AsyncClient) -> None:
+    body = (await client.get("/api/dishes", params={"lang": "it"})).json()
+    ramen = next(dish for dish in body if dish["slug"] == "ramen")
+    assert ramen["cuisine"] == "Giapponese"
+
+
+async def test_violation_messages_are_translated(client: AsyncClient) -> None:
+    fixture = load_fixture("ramen", "invalid_spice_out_of_range.json")
+    response = await client.post(
+        "/api/orders/ramen", params={"lang": "fr"}, json={"data": fixture["data"]}
+    )
+    messages = [violation["message"] for violation in response.json()["violations"]]
+
+    assert response.status_code == HTTP_UNPROCESSABLE
+    assert any("piquant" in message for message in messages), messages
+
+
+async def test_cross_field_rule_message_is_translated(client: AsyncClient) -> None:
+    """The `sh:sparql` path, which needs its message resolved from the shapes graph."""
+    fixture = load_fixture("ramen", "invalid_vegan_topping.json")
+    response = await client.post(
+        "/api/orders/ramen", params={"lang": "de"}, json={"data": fixture["data"]}
+    )
+    violation = next(v for v in response.json()["violations"] if v["pointer"] == "/toppings/1")
+
+    assert violation["message"] == "Dieses Topping gibt es nicht zur veganen Brühe."
+
+
+async def test_a_form_fetched_in_one_language_submits_in_another(client: AsyncClient) -> None:
+    """The wire contract does not move with the reader.
+
+    A user reading Romansh sends exactly the tokens an English reader sends, so a client may
+    switch language between rendering the form and submitting it without re-mapping anything.
+    """
+    form = (await client.get("/api/dishes/ramen/form", params={"lang": "rm"})).json()
+    assert set(form["schema"]["properties"]) == {
+        "broth",
+        "customerName",
+        "customerNote",
+        "extraNoodles",
+        "noodleFirmness",
+        "pickupTime",
+        "quantity",
+        "spiceLevel",
+        "toppings",
+    }
+
+    payload = load_fixture("ramen", "valid.json")["data"]
+    response = await client.post("/api/orders/ramen", params={"lang": "it"}, json={"data": payload})
+    assert response.status_code == HTTP_CREATED
+
+
+async def test_receipt_carries_the_translated_dish_name(client: AsyncClient) -> None:
+    payload = load_fixture("french-tacos", "valid.json")["data"]
+    body = (
+        await client.post("/api/orders/french-tacos", params={"lang": "fr"}, json={"data": payload})
+    ).json()
+    assert body["dishName"] == "Tacos français"

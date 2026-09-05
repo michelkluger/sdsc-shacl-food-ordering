@@ -24,6 +24,8 @@ from rdflib import Graph, URIRef
 
 from food_api.config import Settings
 from food_api.shacl.introspect import (
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
     PropertyConstraints,
     ShapeError,
     find_node_shape,
@@ -43,7 +45,7 @@ class CatalogError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class DishSummary:
-    """The catalogue half of a dish: what a menu or a search result shows."""
+    """The catalogue half of a dish: what a menu or a search result shows, in one language."""
 
     slug: str
     name: str
@@ -73,12 +75,17 @@ class DishSummary:
 
 @dataclass(frozen=True, slots=True)
 class Dish:
-    """A dish: its catalogue entry, its shapes graph, and everything derived from them."""
+    """A dish: its catalogue entry, its shapes graph, and everything derived from them.
 
-    summary: DishSummary
+    Forms and summaries are built once per supported language at startup. The translation is
+    pure and the corpus is read-only, so there is nothing to recompute per request - a German
+    form costs the same as an English one.
+    """
+
+    summaries: dict[str, DishSummary]
     node_shape: URIRef
     properties: tuple[PropertyConstraints, ...]
-    form: FormDefinition
+    forms: dict[str, FormDefinition]
     #: Shapes graph for this dish only: shared property shapes + this dish's shape + vocabulary.
     shapes_graph: Graph
     #: The shared vocabulary. Merged into the *data* graph so SPARQL constraints can read it.
@@ -87,6 +94,27 @@ class Dish:
     @property
     def slug(self) -> str:
         return self.summary.slug
+
+    @property
+    def summary(self) -> DishSummary:
+        """The default-language summary. Prefer :meth:`summary_for` in a request path."""
+        return self.summaries[DEFAULT_LANGUAGE]
+
+    @property
+    def form(self) -> FormDefinition:
+        """The default-language form.
+
+        Validation uses this one deliberately: `key_by_path`, `token_by_iri` and `surcharges`
+        are language-independent by construction, so error mapping and pricing never depend on
+        which language the client happens to be reading in.
+        """
+        return self.forms[DEFAULT_LANGUAGE]
+
+    def summary_for(self, language: str) -> DishSummary:
+        return self.summaries.get(language, self.summaries[DEFAULT_LANGUAGE])
+
+    def form_for(self, language: str) -> FormDefinition:
+        return self.forms.get(language, self.forms[DEFAULT_LANGUAGE])
 
 
 def _as_list(value: Any) -> tuple[str, ...]:
@@ -97,8 +125,33 @@ def _as_list(value: Any) -> tuple[str, ...]:
     return (str(value),)
 
 
-def _read_summary(slug: str, document: dict[str, Any]) -> DishSummary:
-    """Read the catalogue fields out of a dish's JSON-LD document.
+def _localised(value: Any, language: str) -> str:
+    """Read a JSON-LD language map, or a plain string.
+
+    ``dish.jsonld`` may write either::
+
+        "name": "Ramen"
+        "name": { "@none": "Ramen", "de": "Ramen", "fr": "Ramen japonais" }
+
+    A plain string is the right choice for a proper noun that is the same everywhere, and the
+    map for anything that genuinely differs. ``@none`` is the JSON-LD spelling of "no language",
+    and serves as the fallback.
+    """
+    if isinstance(value, dict):
+        base = language.partition("-")[0].lower()
+        for key in (language.lower(), base, DEFAULT_LANGUAGE, "@none"):
+            found = value.get(key)
+            if isinstance(found, str):
+                return found
+        for found in value.values():
+            if isinstance(found, str):
+                return found
+        return ""
+    return str(value)
+
+
+def _read_summary(slug: str, document: dict[str, Any], language: str) -> DishSummary:
+    """Read the catalogue fields out of a dish's JSON-LD document, in one language.
 
     The document is read as JSON rather than through the graph on purpose: these are flat
     presentation fields with no constraints attached, and going via RDF would buy nothing but
@@ -107,9 +160,9 @@ def _read_summary(slug: str, document: dict[str, Any]) -> DishSummary:
     try:
         return DishSummary(
             slug=slug,
-            name=document["name"],
-            description=document["description"],
-            cuisine=document.get("cuisine", "Unspecified"),
+            name=_localised(document["name"], language),
+            description=_localised(document["description"], language),
+            cuisine=_localised(document.get("cuisine", "Unspecified"), language),
             base_price=Decimal(str(document["basePrice"])),
             currency=document.get("currency", "CHF"),
             image=document.get("image"),
@@ -156,6 +209,29 @@ class Catalog:
         graph.parse(self._settings.common_shapes_path, format="turtle")
         return graph
 
+    @cached_property
+    def translations(self) -> Graph:
+        """Every ``data/i18n/<lang>.ttl`` file, merged.
+
+        These carry nothing but language-tagged ``rdfs:label``, ``sh:description`` and
+        ``sh:message`` literals attached to terms and property shapes that already exist. Adding
+        a language is therefore adding one file - the same shape of change as adding a dish.
+        """
+        graph = Graph()
+        directory = self._settings.i18n_dir
+        if not directory.is_dir():
+            logger.warning("No translations directory at %s; serving English only.", directory)
+            return graph
+
+        for path in sorted(directory.glob("*.ttl")):
+            try:
+                graph.parse(path, format="turtle")
+            except Exception as exc:
+                raise CatalogError(f"{path.name} is not valid Turtle: {exc}") from exc
+        names = ", ".join(path.name for path in sorted(directory.glob("*.ttl")))
+        logger.info("Loaded translations from %s", names or "(none)")
+        return graph
+
     def load(self) -> Catalog:
         """Load every dish directory. Raises on the first malformed dish."""
         dishes_dir = self._settings.dishes_dir
@@ -186,8 +262,6 @@ class Catalog:
         except json.JSONDecodeError as exc:
             raise CatalogError(f"{slug}/{DISH_DOCUMENT} is not valid JSON: {exc}") from exc
 
-        summary = _read_summary(slug, document)
-
         # Parse the dish's own shape first and in isolation, so `find_node_shape` looks only at
         # what this dish declares. The shared file contributes property shapes, never a node
         # shape, but relying on that by accident would be a trap for the next dish author.
@@ -203,24 +277,40 @@ class Catalog:
         # Labels, groups and option annotations live in the vocabulary; the shapes graph needs
         # them so the translator can name options and lay out groups.
         shapes += self.vocabulary
+        # Translations attach language-tagged literals to those same subjects.
+        shapes += self.translations
 
         try:
             node_shape = find_node_shape(dish_shape)
-            properties = read_properties(shapes, node_shape)
         except ShapeError as exc:
             raise CatalogError(f"Dish {slug!r}: {exc}") from exc
 
-        form = build_form(
-            properties,
-            base_context=self.base_context,
-            title=summary.name,
-            description=summary.description,
-        )
+        summaries: dict[str, DishSummary] = {}
+        forms: dict[str, FormDefinition] = {}
+        properties_by_language: dict[str, tuple[PropertyConstraints, ...]] = {}
+
+        for language in SUPPORTED_LANGUAGES:
+            try:
+                properties = read_properties(shapes, node_shape, language)
+            except ShapeError as exc:
+                raise CatalogError(f"Dish {slug!r} ({language}): {exc}") from exc
+
+            summary = _read_summary(slug, document, language)
+            summaries[language] = summary
+            properties_by_language[language] = properties
+            forms[language] = build_form(
+                properties,
+                base_context=self.base_context,
+                title=summary.name,
+                description=summary.description,
+                language=language,
+            )
+
         return Dish(
-            summary=summary,
+            summaries=summaries,
             node_shape=node_shape,
-            properties=properties,
-            form=form,
+            properties=properties_by_language[DEFAULT_LANGUAGE],
+            forms=forms,
             shapes_graph=shapes,
             vocabulary=self.vocabulary,
         )

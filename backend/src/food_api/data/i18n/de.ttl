@@ -1,0 +1,201 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+#
+# German (Deutsch).
+#
+# Nothing here declares a term or a constraint. Every subject below already exists in
+# vocab/food.ttl, shapes/common.ttl or a dish shape; this file only attaches language-tagged
+# literals to them. Adding a language is therefore adding one file, with no code change and no
+# edit to any shape - the same shape of change as adding a dish.
+#
+# Only what genuinely differs is translated. "Nori", "Ponzu" and "Kebab" are called that in
+# German too, so they keep their single untagged label in the vocabulary and the fallback chain
+# in shacl/introspect.py resolves them. Translating them into five identical copies would add
+# noise and a maintenance burden without adding meaning.
+#
+
+# ---------------------------------------------------------------------------
+# Form groups
+# ---------------------------------------------------------------------------
+
+food:CoreGroup    rdfs:label "Dein Gericht"@de .
+food:ExtrasGroup  rdfs:label "Extras"@de .
+food:PickupGroup  rdfs:label "Abholung"@de .
+
+# ---------------------------------------------------------------------------
+# Shared fields
+# ---------------------------------------------------------------------------
+
+food:QuantityProperty
+    rdfs:label "Anzahl"@de ;
+    sh:description "Wie viele Portionen wir zubereiten sollen."@de ;
+    sh:message "Die Anzahl muss eine ganze Zahl zwischen 1 und 10 sein."@de .
+
+food:CustomerNameProperty
+    rdfs:label "Dein Name"@de ;
+    sh:description "Den Namen rufen wir aus, wenn die Bestellung fertig ist."@de ;
+    sh:message "Bitte gib einen Namen mit 2 bis 60 Zeichen an, ohne Leerzeichen am Anfang oder Ende."@de .
+
+food:PickupTimeProperty
+    rdfs:label "Abholzeit"@de ;
+    sh:description "Wann du die Bestellung abholst. Leer lassen für so bald wie möglich."@de ;
+    sh:message "Die Abholzeit braucht Datum und Uhrzeit, zum Beispiel 2026-09-05T18:30:00+02:00."@de .
+
+food:CustomerNoteProperty
+    rdfs:label "Hinweise für die Küche"@de ;
+    sh:description "Alles, was die Küche wissen sollte: Allergien, Schärfe, Verpackung."@de ;
+    sh:message "Hinweise sind auf 280 Zeichen begrenzt."@de .
+
+# ---------------------------------------------------------------------------
+# French Tacos
+# ---------------------------------------------------------------------------
+
+food:FrenchTacosOrderShape rdfs:label "French-Tacos-Bestellung"@de .
+
+food:TacosSizeProperty
+    rdfs:label "Grösse"@de ;
+    sh:description "Grösse des Fladens. Grössere Fladen fassen mehr Füllung."@de ;
+    sh:message "Wähle eine Grösse: M, L oder XL."@de .
+
+food:TacosMeatsProperty
+    rdfs:label "Fleisch"@de ;
+    sh:description "Wähle eines oder zwei. Für ein zweites Fleisch braucht es einen XL-Fladen."@de ;
+    sh:message "Wähle mindestens ein Fleisch und höchstens zwei."@de .
+
+food:TacosSaucesProperty
+    rdfs:label "Saucen"@de ;
+    sh:description "Bis zu drei Saucen. Sie werden untergemischt, nicht separat serviert."@de ;
+    sh:message "Wähle höchstens drei Saucen."@de .
+
+food:TacosExtraCheeseProperty
+    rdfs:label "Extra Käsesauce"@de ;
+    sh:description "Eine zweite Kelle Käsesauce."@de .
+
+food:TacosSupplementProperty
+    rdfs:label "Beilage"@de ;
+    sh:description "Etwas dazu."@de .
+
+# ---------------------------------------------------------------------------
+# Ramen
+# ---------------------------------------------------------------------------
+
+food:RamenOrderShape rdfs:label "Ramen-Bestellung"@de .
+
+food:RamenBrothProperty
+    rdfs:label "Brühe"@de ;
+    sh:description "Die Basis der Schale. Tonkotsu köchelt achtzehn Stunden."@de ;
+    sh:message "Wähle genau eine Brühe."@de .
+
+food:RamenNoodleFirmnessProperty
+    rdfs:label "Nudelbiss"@de ;
+    sh:description "Wie lange die Nudeln im Wasser bleiben."@de ;
+    sh:message "Wähle genau einen Nudelbiss."@de .
+
+food:RamenSpiceLevelProperty
+    rdfs:label "Schärfe"@de ;
+    sh:description "0 ist mild, 5 bleibt in Erinnerung."@de ;
+    sh:message "Die Schärfe reicht von 0 bis 5."@de .
+
+food:RamenToppingsProperty
+    rdfs:label "Toppings"@de ;
+    sh:description "Bis zu fünf. Chashu und Ajitama gibt es nicht zur veganen Brühe."@de ;
+    sh:message "Wähle höchstens fünf Toppings."@de .
+
+food:RamenExtraNoodlesProperty
+    rdfs:label "Extra Nudeln (Kaedama)"@de ;
+    sh:description "Eine zweite Portion Nudeln, serviert sobald du danach fragst."@de .
+
+# ---------------------------------------------------------------------------
+# Poke Bowl
+# ---------------------------------------------------------------------------
+
+food:PokeBowlOrderShape rdfs:label "Poke-Bowl-Bestellung"@de .
+
+food:PokeBaseProperty
+    rdfs:label "Basis"@de ;
+    sh:description "Was zuunterst in der Schale liegt."@de ;
+    sh:message "Wähle genau eine Basis."@de .
+
+food:PokeProteinsProperty
+    rdfs:label "Protein"@de ;
+    sh:description "Eines oder zwei. Lachs und Thunfisch zu mischen ist ausdrücklich erlaubt."@de ;
+    sh:message "Wähle ein oder zwei Proteine."@de .
+
+food:PokeDressingProperty
+    rdfs:label "Dressing"@de ;
+    sh:description "Kommt zum Schluss über die ganze Schale."@de ;
+    sh:message "Wähle genau ein Dressing."@de .
+
+food:PokeCrunchProperty
+    rdfs:label "Knusper"@de ;
+    sh:description "Wird obenauf gestreut. Bis zu drei."@de ;
+    sh:message "Wähle höchstens drei knusprige Toppings."@de .
+
+# ---------------------------------------------------------------------------
+# Option terms - only where German genuinely differs
+# ---------------------------------------------------------------------------
+
+food:M  rdfs:label "M (30 cm)"@de .
+food:L  rdfs:label "L (40 cm)"@de .
+food:XL rdfs:label "XL (50 cm)"@de .
+
+food:cordonBleu rdfs:label "Cordon bleu"@de .
+food:nuggets    rdfs:label "Poulet-Nuggets"@de .
+
+food:samurai rdfs:label "Samouraï (scharf)"@de .
+food:bbq     rdfs:label "Barbecue"@de .
+food:mayo    rdfs:label "Mayonnaise"@de .
+
+food:fries      rdfs:label "Extra Pommes"@de .
+food:onionRings rdfs:label "Zwiebelringe"@de .
+
+food:tonkotsu  rdfs:label "Tonkotsu (Schwein)"@de .
+food:shoyu     rdfs:label "Shoyu (Soja)"@de .
+food:shio      rdfs:label "Shio (Salz)"@de .
+food:veganMiso rdfs:label "Veganes Miso"@de .
+
+food:soft      rdfs:label "Weich"@de .
+food:medium    rdfs:label "Mittel"@de .
+food:firm      rdfs:label "Fest"@de .
+food:extraFirm rdfs:label "Sehr fest (Barikata)"@de .
+
+food:chashu  rdfs:label "Chashu-Schweinefleisch"@de .
+food:ajitama rdfs:label "Ajitama (mariniertes Ei)"@de .
+food:menma   rdfs:label "Menma (Bambus)"@de .
+food:corn    rdfs:label "Zuckermais"@de .
+food:negi    rdfs:label "Frühlingszwiebel"@de .
+food:butter  rdfs:label "Hokkaido-Butter"@de .
+
+food:sushiRice   rdfs:label "Sushi-Reis"@de .
+food:brownRice   rdfs:label "Vollkornreis"@de .
+food:mixedGreens rdfs:label "Blattsalate"@de .
+food:soba        rdfs:label "Soba-Nudeln"@de .
+
+food:salmon  rdfs:label "Lachs"@de .
+food:tuna    rdfs:label "Thunfisch"@de .
+food:tofu    rdfs:label "Marinierter Tofu"@de .
+food:chicken rdfs:label "Gegrilltes Poulet"@de .
+
+food:spicyMayo   rdfs:label "Scharfe Mayo"@de .
+food:sesameOil   rdfs:label "Sesamöl"@de .
+food:wasabiCream rdfs:label "Wasabi-Creme"@de .
+
+food:crispyOnion rdfs:label "Röstzwiebeln"@de .
+food:cashew      rdfs:label "Cashewkerne"@de .
+food:sesameSeeds rdfs:label "Sesamsamen"@de .
+
+# ---------------------------------------------------------------------------
+# Cross-field rule messages
+# ---------------------------------------------------------------------------
+
+food:TacosTwoMeatsConstraint
+    sh:message "Zwei Fleischsorten passen nur in einen XL-Fladen - wähle XL oder lass eine weg."@de .
+
+food:RamenVeganToppingConstraint
+    sh:message "Dieses Topping gibt es nicht zur veganen Brühe."@de .
+
+food:PokeVeganDressingConstraint
+    sh:message "Dieses Dressing ist nicht vegan, alle Proteine in dieser Bowl aber schon."@de .
+

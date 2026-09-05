@@ -3,13 +3,39 @@
   "id": "food:ramen",
   "type": "food:Dish",
   "slug": "ramen",
-  "name": "Ramen",
-  "description": "Wheat noodles in a long-simmered broth, finished to order with toppings. Choose your broth, how firm you want the noodles, and how much heat you can take.",
-  "cuisine": "Japanese",
+  "name": {
+    "@none": "Ramen"
+  },
+  "description": {
+    "en": "Wheat noodles in a long-simmered broth, finished to order with toppings. Choose your broth, how firm you want the noodles, and how much heat you can take.",
+    "de": "Weizennudeln in lange geköchelter Brühe, auf Bestellung mit Toppings vollendet. Wähle die Brühe, den Nudelbiss und wie viel Schärfe du verträgst.",
+    "fr": "Nouilles de blé dans un bouillon longuement mijoté, garnies à la commande. Choisissez le bouillon, la cuisson des nouilles et le piquant que vous supportez.",
+    "it": "Noodle di grano in un brodo a lunga cottura, guarniti al momento. Scegli il brodo, la cottura dei noodle e quanto piccante reggi.",
+    "rm": "Tagliarins da furment en in bragl cuschinà ditg, garnids sin ordinaziun. Tscherna il bragl, la cottura dals tagliarins e quant picant che ti sustegns."
+  },
+  "cuisine": {
+    "en": "Japanese",
+    "de": "Japanisch",
+    "fr": "Japonais",
+    "it": "Giapponese",
+    "rm": "Giapunais"
+  },
   "basePrice": 16.0,
   "currency": "CHF",
   "image": "/static/img/ramen.svg",
-  "tag": ["noodles", "broth", "spicy", "umami", "vegan-available"],
-  "diet": ["vegan-available", "vegetarian-available"],
-  "allergen": ["gluten", "soy"]
+  "tag": [
+    "noodles",
+    "broth",
+    "spicy",
+    "umami",
+    "vegan-available"
+  ],
+  "diet": [
+    "vegan-available",
+    "vegetarian-available"
+  ],
+  "allergen": [
+    "gluten",
+    "soy"
+  ]
 }

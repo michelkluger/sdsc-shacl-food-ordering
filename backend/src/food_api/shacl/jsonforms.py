@@ -64,6 +64,8 @@ class FormDefinition:
     schema: dict[str, Any]
     uischema: dict[str, Any]
     context: dict[str, Any]
+    #: The language its human-readable strings were selected in.
+    language: str = "en"
     #: RDF predicate IRI -> JSON key. Used in reverse to turn a ``sh:resultPath`` into a pointer.
     key_by_path: dict[str, str] = field(default_factory=dict)
     #: Option IRI -> compact token, so a violation can report ``"chashu"`` and not a full IRI.
@@ -230,8 +232,14 @@ def build_form(
     base_context: dict[str, Any],
     title: str,
     description: str | None = None,
+    language: str = "en",
 ) -> FormDefinition:
-    """Build the JSON Schema, UI schema and JSON-LD context for one dish."""
+    """Build the JSON Schema, UI schema and JSON-LD context for one dish, in one language.
+
+    Only human-readable strings vary with ``language``. The JSON keys, the context terms, the
+    surcharges and the path map are identical across languages by construction, which is what
+    lets a form rendered in Romansh be validated and priced by the English one.
+    """
     schema_properties: dict[str, Any] = {}
     required: list[str] = []
     key_by_path: dict[str, str] = {}
@@ -268,6 +276,7 @@ def build_form(
         schema=schema,
         uischema=_uischema(properties),
         context=context,
+        language=language,
         key_by_path=key_by_path,
         token_by_iri=token_by_iri,
         surcharges=surcharges,

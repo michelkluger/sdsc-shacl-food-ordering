@@ -16,6 +16,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import SH
 from rdflib.term import Node
 
+from food_api.shacl.introspect import DEFAULT_LANGUAGE, select_literal
 from food_api.shacl.jsonforms import FormDefinition
 
 SEVERITY_LABELS: dict[str, str] = {
@@ -89,14 +90,66 @@ def _pointer_for(field: str | None, value: Any, payload: dict[str, Any]) -> str:
     return f"/{field}"
 
 
-def _messages(report: Graph, result: Node) -> list[str]:
-    return [str(message) for message in report.objects(result, SH.resultMessage)]
+def _messages(
+    report: Graph,
+    result: Node,
+    language: str,
+    shapes: Graph | None = None,
+) -> list[str]:
+    """Pick the report messages for ``language``.
+
+    A shape may declare ``sh:message`` several times with different language tags. For core
+    constraints pySHACL copies each one into ``sh:resultMessage`` with its tag intact, so the
+    right one can simply be selected here - no translation table in Python, and no second place
+    for the wording to live.
+
+    **For ``sh:sparql`` constraints it does not.** pySHACL runs template substitution on those
+    messages and rebuilds them as plain literals, dropping the tag, so every language arrives
+    indistinguishable and a naive reader concatenates all five. When the report names the
+    constraint via ``sh:sourceConstraint`` we therefore go back to the shapes graph and select
+    the tagged literal from the source of truth instead.
+    """
+    if shapes is not None:
+        source = report.value(result, SH.sourceConstraint)
+        if source is not None:
+            from_shape = select_literal(shapes, source, SH.message, language)
+            if from_shape:
+                return [from_shape]
+
+    literals = [
+        message
+        for message in report.objects(result, SH.resultMessage)
+        if isinstance(message, Literal)
+    ]
+    if not literals:
+        return []
+
+    wanted = language.lower()
+    base = wanted.partition("-")[0]
+
+    for predicate in (
+        lambda tag: tag == wanted,
+        lambda tag: tag.partition("-")[0] == base,
+        lambda tag: tag.partition("-")[0] == DEFAULT_LANGUAGE,
+        lambda tag: not tag,
+    ):
+        matching = [str(lit) for lit in literals if predicate((lit.language or "").lower())]
+        if matching:
+            # More than one match at the untagged step means the tags were lost somewhere.
+            # Returning all of them would concatenate every language into one message, so take
+            # the first rather than producing something unreadable.
+            return matching[:1] if len(matching) > 1 else matching
+
+    return [str(literals[0])]
 
 
 def collect_violations(
     report: Graph,
     form: FormDefinition,
     payload: dict[str, Any],
+    *,
+    language: str = DEFAULT_LANGUAGE,
+    shapes: Graph | None = None,
 ) -> list[Violation]:
     """Read every ``sh:ValidationResult`` out of ``report``, newest-shape-agnostic.
 
@@ -122,7 +175,7 @@ def collect_violations(
             field = candidate if candidate in payload else None
 
         value = _compact(value_node, form)
-        messages = _messages(report, result)
+        messages = _messages(report, result, language, shapes)
         constraint = _localname(str(constraint_node)) if constraint_node is not None else "Unknown"
 
         violations.append(
@@ -132,7 +185,7 @@ def collect_violations(
                 path=path,
                 constraint=constraint,
                 severity=SEVERITY_LABELS.get(str(severity_node), "violation"),
-                message=_message_for(constraint, messages, field, path),
+                message=_message_for(constraint, messages, field, path, language),
                 value=value,
             )
         )
@@ -141,11 +194,22 @@ def collect_violations(
     return violations
 
 
+#: The only user-facing string in the backend that is not declared by a shape. See below.
+CLOSED_MESSAGES: dict[str, str] = {
+    "en": "'{field}' is not a field of this dish's form.",
+    "de": "'{field}' ist kein Feld dieses Formulars.",
+    "fr": "'{field}' n'est pas un champ de ce formulaire.",
+    "it": "'{field}' non e un campo di questo modulo.",
+    "rm": "'{field}' n'e betg in champ da quest formular.",
+}
+
+
 def _message_for(
     constraint: str,
     messages: list[str],
     field: str | None,
     path: str | None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Choose the message a user should read for one violation.
 
@@ -155,8 +219,13 @@ def _message_for(
     generated message names the internal order IRI, which no client should ever see.
     """
     if constraint == "ClosedConstraintComponent":
-        name = field or (_localname(path) if path else "a field")
-        return f"{name!r} is not a field of this dish's form."
+        name = field or (_localname(path) if path else "?")
+        # The one message in the system with no shape behind it: pySHACL generates it, and its
+        # generated text names the internal order IRI. Because there is no sh:message to
+        # translate, the wording lives here - the single exception to "messages come from the
+        # shapes", and worth keeping to exactly one.
+        template = CLOSED_MESSAGES.get(language, CLOSED_MESSAGES[DEFAULT_LANGUAGE])
+        return template.format(field=name)
     if messages:
         return " ".join(messages)
 

@@ -1,0 +1,182 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+#
+# French (français). See de.ttl for why this file contains only literals.
+#
+
+food:CoreGroup    rdfs:label "Votre plat"@fr .
+food:ExtrasGroup  rdfs:label "Suppléments"@fr .
+food:PickupGroup  rdfs:label "Retrait"@fr .
+
+food:QuantityProperty
+    rdfs:label "Quantité"@fr ;
+    sh:description "Combien de portions préparer."@fr ;
+    sh:message "La quantité doit être un nombre entier entre 1 et 10."@fr .
+
+food:CustomerNameProperty
+    rdfs:label "Votre nom"@fr ;
+    sh:description "Le nom que nous appellerons lorsque la commande sera prête."@fr ;
+    sh:message "Indiquez un nom de 2 à 60 caractères, sans espace au début ni à la fin."@fr .
+
+food:PickupTimeProperty
+    rdfs:label "Heure de retrait"@fr ;
+    sh:description "Quand vous viendrez chercher la commande. Laissez vide pour dès que possible."@fr ;
+    sh:message "L'heure de retrait doit être une date et une heure, par exemple 2026-09-05T18:30:00+02:00."@fr .
+
+food:CustomerNoteProperty
+    rdfs:label "Remarques pour la cuisine"@fr ;
+    sh:description "Tout ce que la cuisine devrait savoir : allergies, piquant, emballage."@fr ;
+    sh:message "Les remarques sont limitées à 280 caractères."@fr .
+
+# ---------------------------------------------------------------------------
+# French Tacos
+# ---------------------------------------------------------------------------
+
+food:FrenchTacosOrderShape rdfs:label "Commande de tacos français"@fr .
+
+food:TacosSizeProperty
+    rdfs:label "Taille"@fr ;
+    sh:description "Taille de la galette. Les plus grandes contiennent davantage de garniture."@fr ;
+    sh:message "Choisissez une taille : M, L ou XL."@fr .
+
+food:TacosMeatsProperty
+    rdfs:label "Viande"@fr ;
+    sh:description "Une ou deux. Une deuxième viande exige une galette XL."@fr ;
+    sh:message "Choisissez au moins une viande, et deux au maximum."@fr .
+
+food:TacosSaucesProperty
+    rdfs:label "Sauces"@fr ;
+    sh:description "Jusqu'à trois sauces. Elles sont mélangées à la garniture, pas servies à part."@fr ;
+    sh:message "Choisissez au maximum trois sauces."@fr .
+
+food:TacosExtraCheeseProperty
+    rdfs:label "Sauce fromagère supplémentaire"@fr ;
+    sh:description "Une deuxième louche de sauce fromagère."@fr .
+
+food:TacosSupplementProperty
+    rdfs:label "Accompagnement"@fr ;
+    sh:description "Quelque chose à côté."@fr .
+
+# ---------------------------------------------------------------------------
+# Ramen
+# ---------------------------------------------------------------------------
+
+food:RamenOrderShape rdfs:label "Commande de ramen"@fr .
+
+food:RamenBrothProperty
+    rdfs:label "Bouillon"@fr ;
+    sh:description "La base du bol. Le tonkotsu mijote dix-huit heures."@fr ;
+    sh:message "Choisissez exactement un bouillon."@fr .
+
+food:RamenNoodleFirmnessProperty
+    rdfs:label "Cuisson des nouilles"@fr ;
+    sh:description "Combien de temps les nouilles restent dans l'eau."@fr ;
+    sh:message "Choisissez exactement une cuisson."@fr .
+
+food:RamenSpiceLevelProperty
+    rdfs:label "Niveau de piquant"@fr ;
+    sh:description "0 est doux, 5 laisse des souvenirs."@fr ;
+    sh:message "Le niveau de piquant va de 0 à 5."@fr .
+
+food:RamenToppingsProperty
+    rdfs:label "Garnitures"@fr ;
+    sh:description "Jusqu'à cinq. Le chashu et l'ajitama ne sont pas disponibles avec un bouillon végane."@fr ;
+    sh:message "Choisissez au maximum cinq garnitures."@fr .
+
+food:RamenExtraNoodlesProperty
+    rdfs:label "Nouilles supplémentaires (kaedama)"@fr ;
+    sh:description "Une deuxième portion de nouilles, servie dès que vous la demandez."@fr .
+
+# ---------------------------------------------------------------------------
+# Poke Bowl
+# ---------------------------------------------------------------------------
+
+food:PokeBowlOrderShape rdfs:label "Commande de poke bowl"@fr .
+
+food:PokeBaseProperty
+    rdfs:label "Base"@fr ;
+    sh:description "Ce qui se trouve au fond du bol."@fr ;
+    sh:message "Choisissez exactement une base."@fr .
+
+food:PokeProteinsProperty
+    rdfs:label "Protéine"@fr ;
+    sh:description "Une ou deux. Mélanger saumon et thon est permis, et même conseillé."@fr ;
+    sh:message "Choisissez une ou deux protéines."@fr .
+
+food:PokeDressingProperty
+    rdfs:label "Sauce"@fr ;
+    sh:description "Versée sur tout le bol juste avant de le fermer."@fr ;
+    sh:message "Choisissez exactement une sauce."@fr .
+
+food:PokeCrunchProperty
+    rdfs:label "Croquant"@fr ;
+    sh:description "Parsemé sur le dessus. Jusqu'à trois."@fr ;
+    sh:message "Choisissez au maximum trois éléments croquants."@fr .
+
+# ---------------------------------------------------------------------------
+# Option terms
+# ---------------------------------------------------------------------------
+
+food:M  rdfs:label "M (30 cm)"@fr .
+food:L  rdfs:label "L (40 cm)"@fr .
+food:XL rdfs:label "XL (50 cm)"@fr .
+
+food:nuggets rdfs:label "Nuggets de poulet"@fr .
+
+food:samurai rdfs:label "Samouraï (piquante)"@fr .
+food:bbq     rdfs:label "Barbecue"@fr .
+food:mayo    rdfs:label "Mayonnaise"@fr .
+
+food:fries      rdfs:label "Frites supplémentaires"@fr .
+food:onionRings rdfs:label "Rondelles d'oignon"@fr .
+
+food:tonkotsu  rdfs:label "Tonkotsu (porc)"@fr .
+food:shoyu     rdfs:label "Shoyu (soja)"@fr .
+food:shio      rdfs:label "Shio (sel)"@fr .
+food:veganMiso rdfs:label "Miso végane"@fr .
+
+food:soft      rdfs:label "Tendres"@fr .
+food:medium    rdfs:label "Moyennes"@fr .
+food:firm      rdfs:label "Fermes"@fr .
+food:extraFirm rdfs:label "Très fermes (barikata)"@fr .
+
+food:chashu  rdfs:label "Porc chashu"@fr .
+food:ajitama rdfs:label "Ajitama (œuf mariné)"@fr .
+food:menma   rdfs:label "Menma (pousses de bambou)"@fr .
+food:corn    rdfs:label "Maïs doux"@fr .
+food:negi    rdfs:label "Oignon nouveau"@fr .
+food:butter  rdfs:label "Beurre d'Hokkaidō"@fr .
+
+food:sushiRice   rdfs:label "Riz à sushi"@fr .
+food:brownRice   rdfs:label "Riz complet"@fr .
+food:mixedGreens rdfs:label "Salade mêlée"@fr .
+food:soba        rdfs:label "Nouilles soba"@fr .
+
+food:salmon  rdfs:label "Saumon"@fr .
+food:tuna    rdfs:label "Thon"@fr .
+food:tofu    rdfs:label "Tofu mariné"@fr .
+food:chicken rdfs:label "Poulet grillé"@fr .
+
+food:spicyMayo   rdfs:label "Mayo piquante"@fr .
+food:sesameOil   rdfs:label "Huile de sésame"@fr .
+food:wasabiCream rdfs:label "Crème au wasabi"@fr .
+
+food:crispyOnion rdfs:label "Oignons frits"@fr .
+food:cashew      rdfs:label "Noix de cajou"@fr .
+food:sesameSeeds rdfs:label "Graines de sésame"@fr .
+
+# ---------------------------------------------------------------------------
+# Cross-field rule messages
+# ---------------------------------------------------------------------------
+
+food:TacosTwoMeatsConstraint
+    sh:message "Deux viandes ne tiennent que dans une galette XL - choisissez XL, ou retirez-en une."@fr .
+
+food:RamenVeganToppingConstraint
+    sh:message "Cette garniture n'est pas disponible avec un bouillon végane."@fr .
+
+food:PokeVeganDressingConstraint
+    sh:message "Cette sauce n'est pas végane, alors que toutes les protéines de ce bol le sont."@fr .
+

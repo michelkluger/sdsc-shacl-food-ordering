@@ -46,6 +46,11 @@ class FormResponse(BaseModel):
     uischema: dict[str, Any]
     context: dict[str, Any] = Field(alias="@context")
     shape_iri: str = Field(alias="shapeIri")
+    #: The language the human-readable strings above are in, after negotiation.
+    language: str = "en"
+    #: Every language this API can serve, so a client can build a switcher without a
+    #: hardcoded list that could fall out of step with the corpus.
+    available_languages: list[str] = Field(default_factory=list, alias="availableLanguages")
 
 
 class OrderRequest(BaseModel):
@@ -66,6 +71,7 @@ class OrderReceipt(BaseModel):
 
     order_id: str = Field(alias="orderId")
     dish: str
+    dish_name: str = Field(alias="dishName")
     accepted: bool = True
     total: float
     currency: str

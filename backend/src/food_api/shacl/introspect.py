@@ -135,50 +135,99 @@ def _decimal(graph: Graph, subject: Node, predicate: URIRef) -> Decimal | None:
     return Decimal(str(raw)) if isinstance(raw, Literal) else None
 
 
-def _label(graph: Graph, subject: Node, fallback: str) -> str:
-    for label in graph.objects(subject, RDFS.label):
-        return str(label)
-    return fallback
+#: Language tags the API can serve: the four Swiss national languages plus English.
+SUPPORTED_LANGUAGES: tuple[str, ...] = ("en", "de", "fr", "it", "rm")
+
+#: Served when a client asks for nothing, or for something we do not have.
+DEFAULT_LANGUAGE = "en"
+
+
+def select_literal(
+    graph: Graph,
+    subject: Node,
+    predicate: URIRef,
+    language: str = DEFAULT_LANGUAGE,
+) -> str | None:
+    """Return the best literal for ``predicate`` in ``language``.
+
+    The fallback chain is: the exact tag, then the same language ignoring a region subtag
+    (``de-CH`` matches ``de``), then English, then an untagged literal, then any literal at all.
+
+    Falling back rather than failing is what lets the vocabulary translate only what actually
+    differs. "Nori" and "Ponzu" are called that in every language here, so they carry one
+    untagged label instead of five identical ones, and a German request still resolves them.
+    """
+    exact: str | None = None
+    prefix: str | None = None
+    english: str | None = None
+    untagged: str | None = None
+    any_value: str | None = None
+
+    wanted = language.lower()
+    base = wanted.split("-")[0]
+
+    for value in graph.objects(subject, predicate):
+        if not isinstance(value, Literal):
+            continue
+        text = str(value)
+        tag = (value.language or "").lower()
+
+        if tag == wanted and exact is None:
+            exact = text
+        elif tag.split("-")[0] == base and prefix is None:
+            prefix = text
+        elif tag.split("-")[0] == DEFAULT_LANGUAGE and english is None:
+            english = text
+        elif not tag and untagged is None:
+            untagged = text
+        if any_value is None:
+            any_value = text
+
+    return exact or prefix or english or untagged or any_value
+
+
+def _label(graph: Graph, subject: Node, fallback: str, language: str = DEFAULT_LANGUAGE) -> str:
+    return select_literal(graph, subject, RDFS.label, language) or fallback
 
 
 def _strings(graph: Graph, subject: Node, predicate: URIRef) -> tuple[str, ...]:
     return tuple(sorted(str(value) for value in graph.objects(subject, predicate)))
 
 
-def _read_option(graph: Graph, term: Node) -> OptionTerm:
+def _read_option(graph: Graph, term: Node, language: str) -> OptionTerm:
     iri = str(term)
     token = _localname(iri)
     return OptionTerm(
         iri=iri,
         token=token,
-        label=_label(graph, term, token),
+        label=_label(graph, term, token, language),
         surcharge=_decimal(graph, term, FOOD.surcharge) or Decimal(0),
         allergens=_strings(graph, term, FOOD.containsAllergen),
         excluded_by_diet=_strings(graph, term, FOOD.excludedByDiet),
     )
 
 
-def _read_in_list(graph: Graph, property_shape: Node) -> tuple[OptionTerm, ...]:
+def _read_in_list(graph: Graph, property_shape: Node, language: str) -> tuple[OptionTerm, ...]:
     head = _one(graph, property_shape, SH["in"])
     if head is None:
         return ()
     members = list(Collection(graph, head))
-    return tuple(_read_option(graph, member) for member in members)
+    return tuple(_read_option(graph, member, language) for member in members)
 
 
-def _read_group(graph: Graph, property_shape: Node) -> PropertyGroup | None:
+def _read_group(graph: Graph, property_shape: Node, language: str) -> PropertyGroup | None:
     group = _one(graph, property_shape, SH.group)
     if group is None:
         return None
     iri = str(group)
     return PropertyGroup(
         iri=iri,
-        label=_label(graph, group, _localname(iri)),
+        label=_label(graph, group, _localname(iri), language),
         order=_decimal(graph, group, SH.order) or Decimal(0),
     )
 
 
-def _read_property(graph: Graph, property_shape: Node) -> PropertyConstraints:
+def _read_property(graph: Graph, property_shape: Node, language: str) -> PropertyConstraints:
     path = _one(graph, property_shape, SH.path)
     if not isinstance(path, URIRef):
         raise ShapeError(
@@ -193,35 +242,38 @@ def _read_property(graph: Graph, property_shape: Node) -> PropertyConstraints:
     # is deliberate and written up in DESIGN.md.
     name_literal = _one(graph, property_shape, SH.name)
     name = str(name_literal) if name_literal is not None else _localname(str(path))
-    label_literal = _one(graph, property_shape, RDFS.label)
+
+    # Everything a person reads is language-selected; `sh:name` deliberately is not, because it
+    # is the wire contract. A German form and an English form describe the same JSON keys.
+    label = select_literal(graph, property_shape, RDFS.label, language)
+    description = select_literal(graph, property_shape, SH.description, language)
+    message = select_literal(graph, property_shape, SH.message, language)
 
     datatype = _one(graph, property_shape, SH.datatype)
     if isinstance(datatype, URIRef) and datatype not in SUPPORTED_DATATYPES:
         raise ShapeError(f"Property shape for {name!r} uses unsupported datatype {datatype}.")
 
     node_kind = _one(graph, property_shape, SH.nodeKind)
-    description = _one(graph, property_shape, SH.description)
-    message = _one(graph, property_shape, SH.message)
 
     return PropertyConstraints(
         path=str(path),
         name=name,
-        label=str(label_literal) if label_literal is not None else None,
-        description=str(description) if description is not None else None,
+        label=label,
+        description=description,
         datatype=str(datatype) if datatype is not None else None,
         node_kind=str(node_kind) if node_kind is not None else None,
         min_count=_int(graph, property_shape, SH.minCount),
         max_count=_int(graph, property_shape, SH.maxCount),
-        options=_read_in_list(graph, property_shape),
+        options=_read_in_list(graph, property_shape, language),
         min_inclusive=_decimal(graph, property_shape, SH.minInclusive),
         max_inclusive=_decimal(graph, property_shape, SH.maxInclusive),
         min_length=_int(graph, property_shape, SH.minLength),
         max_length=_int(graph, property_shape, SH.maxLength),
         pattern=str(_one(graph, property_shape, SH.pattern) or "") or None,
         default=_scalar(_one(graph, property_shape, SH.defaultValue)),
-        group=_read_group(graph, property_shape),
+        group=_read_group(graph, property_shape, language),
         order=_decimal(graph, property_shape, SH.order),
-        message=str(message) if message is not None else None,
+        message=message,
     )
 
 
@@ -247,7 +299,11 @@ def find_node_shape(graph: Graph) -> URIRef:
     return candidates[0]
 
 
-def read_properties(graph: Graph, node_shape: URIRef) -> tuple[PropertyConstraints, ...]:
+def read_properties(
+    graph: Graph,
+    node_shape: URIRef,
+    language: str = DEFAULT_LANGUAGE,
+) -> tuple[PropertyConstraints, ...]:
     """Read every ``sh:property`` of ``node_shape``, ordered for display.
 
     Property shapes reached by IRI (the reusable ones in ``shapes/common.ttl``) and property
@@ -255,7 +311,7 @@ def read_properties(graph: Graph, node_shape: URIRef) -> tuple[PropertyConstrain
     letting SHACL, rather than Python, decide what a dish's form contains.
     """
     properties = [
-        _read_property(graph, property_shape)
+        _read_property(graph, property_shape, language)
         for property_shape in graph.objects(node_shape, SH.property)
     ]
 

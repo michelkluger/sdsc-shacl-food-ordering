@@ -15,6 +15,7 @@ import pyshacl
 
 from food_api.catalog.registry import Dish
 from food_api.jsonld.lift import LiftError, new_order_iri, to_graph
+from food_api.shacl.introspect import DEFAULT_LANGUAGE
 from food_api.shacl.report import Violation, collect_violations
 
 
@@ -30,12 +31,22 @@ class ValidationOutcome:
     report_text: str = ""
 
 
-def validate_order(dish: Dish, payload: dict[str, Any]) -> ValidationOutcome:
+def validate_order(
+    dish: Dish,
+    payload: dict[str, Any],
+    *,
+    language: str = DEFAULT_LANGUAGE,
+) -> ValidationOutcome:
     """Validate ``payload`` against ``dish``'s shape and return structured violations.
 
     ``advanced=True`` is required: without it pySHACL skips ``sh:sparql`` entirely and every
     cross-field rule silently passes. ``inference="none"`` keeps the data graph exactly as
     submitted, so a violation always points at something the client actually sent.
+
+    ``language`` selects the wording of the messages only. Which payloads conform is decided by
+    the shape and cannot vary by language - an order that is valid in German is valid in Italian.
+    Error *mapping* likewise uses the default-language form, whose key and path maps are
+    language-independent by construction.
     """
     order_iri = new_order_iri()
     try:
@@ -64,7 +75,15 @@ def validate_order(dish: Dish, payload: dict[str, Any]) -> ValidationOutcome:
         allow_warnings=False,
     )
 
-    violations = () if conforms else tuple(collect_violations(report_graph, dish.form, payload))
+    violations = (
+        ()
+        if conforms
+        else tuple(
+            collect_violations(
+                report_graph, dish.form, payload, language=language, shapes=dish.shapes_graph
+            )
+        )
+    )
     return ValidationOutcome(
         conforms=bool(conforms),
         violations=violations,

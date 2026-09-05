@@ -3,13 +3,39 @@
   "id": "food:poke-bowl",
   "type": "food:Dish",
   "slug": "poke-bowl",
-  "name": "Poke Bowl",
-  "description": "Hawaiian by way of Japan: a bowl of rice or greens under raw fish or tofu, dressed and finished with something crunchy. Built to be light, and easy to make vegan.",
-  "cuisine": "Hawaiian",
+  "name": {
+    "@none": "Poke Bowl"
+  },
+  "description": {
+    "en": "Hawaiian by way of Japan: a bowl of rice or greens under raw fish or tofu, dressed and finished with something crunchy. Built to be light, and easy to make vegan.",
+    "de": "Hawaiianisch mit japanischem Umweg: eine Schale Reis oder Blattsalat unter rohem Fisch oder Tofu, angemacht und mit etwas Knusprigem vollendet. Leicht gedacht und einfach vegan zu machen.",
+    "fr": "Hawaïen par le Japon : un bol de riz ou de salade sous du poisson cru ou du tofu, assaisonné et parsemé de croquant. Pensé léger, et facile à décliner en végane.",
+    "it": "Hawaiano passando dal Giappone: una ciotola di riso o insalata sotto pesce crudo o tofu, condita e completata con qualcosa di croccante. Pensato leggero e facile da rendere vegano.",
+    "rm": "Hawaian via il Giapun: ina scadiola da ris u salata sut pesch crai u tofu, cundida e cumpletada cun insatge croccant. Pensà lev e simpel da far vegan."
+  },
+  "cuisine": {
+    "en": "Hawaiian",
+    "de": "Hawaiianisch",
+    "fr": "Hawaïen",
+    "it": "Hawaiano",
+    "rm": "Hawaian"
+  },
   "basePrice": 18.5,
   "currency": "CHF",
   "image": "/static/img/poke-bowl.svg",
-  "tag": ["bowl", "raw fish", "fresh", "light", "gluten-free-available"],
-  "diet": ["vegan-available", "vegetarian-available", "pescatarian"],
-  "allergen": ["soy"]
+  "tag": [
+    "bowl",
+    "raw fish",
+    "fresh",
+    "light",
+    "gluten-free-available"
+  ],
+  "diet": [
+    "vegan-available",
+    "vegetarian-available",
+    "pescatarian"
+  ],
+  "allergen": [
+    "soy"
+  ]
 }

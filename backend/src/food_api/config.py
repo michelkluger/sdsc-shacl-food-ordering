@@ -69,6 +69,10 @@ class Settings(BaseSettings):
         return self.data_dir / "context" / "base.jsonld"
 
     @property
+    def i18n_dir(self) -> Path:
+        return self.data_dir / "i18n"
+
+    @property
     def dishes_dir(self) -> Path:
         return self.data_dir / "dishes"
 

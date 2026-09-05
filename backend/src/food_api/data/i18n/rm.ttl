@@ -1,0 +1,192 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+#
+# Romansh (rumantsch), in Rumantsch Grischun.
+#
+# Switzerland's fourth national language, and the one most software quietly omits. It is
+# included here because the cost of a language in this design is one file, so leaving it out
+# would have been a choice rather than a constraint.
+#
+# Coverage is honest rather than complete: field labels, group labels and validation messages
+# are translated, because those are what a person has to read to fill the form in. Option names
+# that are proper nouns fall back through the chain in shacl/introspect.py, which is the
+# behaviour that makes partial translation safe. A speaker should review this before it is
+# shown to anyone as finished work - see AI_USAGE.md.
+#
+
+food:CoreGroup    rdfs:label "Tes plat"@rm .
+food:ExtrasGroup  rdfs:label "Supplements"@rm .
+food:PickupGroup  rdfs:label "Retratga"@rm .
+
+food:QuantityProperty
+    rdfs:label "Quantitad"@rm ;
+    sh:description "Quantas porziuns che nus duain preparar."@rm ;
+    sh:message "La quantitad sto esser in dumber entir tranter 1 e 10."@rm .
+
+food:CustomerNameProperty
+    rdfs:label "Tes num"@rm ;
+    sh:description "Il num che nus clamain cur che l'orden è pront."@rm ;
+    sh:message "Endatescha per plaschair in num da 2 fin 60 caracters, senza spazis al cumenzament u a la fin."@rm .
+
+food:PickupTimeProperty
+    rdfs:label "Ura da retratga"@rm ;
+    sh:description "Cura che ti vegns a tour l'orden. Lascha vid per uschè spert sco pussaivel."@rm ;
+    sh:message "L'ura da retratga dovra data ed ura, per exempel 2026-09-05T18:30:00+02:00."@rm .
+
+food:CustomerNoteProperty
+    rdfs:label "Remartgas per la cuschina"@rm ;
+    sh:description "Tut quai che la cuschina duess savair: allergias, picant, pachet."@rm ;
+    sh:message "Las remartgas èn limitadas a 280 caracters."@rm .
+
+# ---------------------------------------------------------------------------
+# French Tacos
+# ---------------------------------------------------------------------------
+
+food:FrenchTacosOrderShape rdfs:label "Orden da tacos franzos"@rm .
+
+food:TacosSizeProperty
+    rdfs:label "Grandezza"@rm ;
+    sh:description "Grandezza da la tortilla. Tortillas pli grondas tegnan dapli farsa."@rm ;
+    sh:message "Tscherna ina grandezza: M, L u XL."@rm .
+
+food:TacosMeatsProperty
+    rdfs:label "Charn"@rm ;
+    sh:description "Ina u duas. Ina segunda charn dovra ina tortilla XL."@rm ;
+    sh:message "Tscherna almain ina charn e maximalmain duas."@rm .
+
+food:TacosSaucesProperty
+    rdfs:label "Salsas"@rm ;
+    sh:description "Fin a trais salsas. Ellas vegnan maschadadas en la farsa, betg servidas separadamain."@rm ;
+    sh:message "Tscherna maximalmain trais salsas."@rm .
+
+food:TacosExtraCheeseProperty
+    rdfs:label "Salsa da chaschiel supplementara"@rm ;
+    sh:description "Ina segunda cazza da salsa da chaschiel."@rm .
+
+food:TacosSupplementProperty
+    rdfs:label "Accumpagnament"@rm ;
+    sh:description "Insatge dasperas."@rm .
+
+# ---------------------------------------------------------------------------
+# Ramen
+# ---------------------------------------------------------------------------
+
+food:RamenOrderShape rdfs:label "Orden da ramen"@rm .
+
+food:RamenBrothProperty
+    rdfs:label "Bragl"@rm ;
+    sh:description "La basa da la scadiola. Il tonkotsu cuschina deschdotg uras."@rm ;
+    sh:message "Tscherna exactamain in bragl."@rm .
+
+food:RamenNoodleFirmnessProperty
+    rdfs:label "Cottura dals tagliarins"@rm ;
+    sh:description "Quant ditg che ils tagliarins restan en l'aua."@rm ;
+    sh:message "Tscherna exactamain ina cottura."@rm .
+
+food:RamenSpiceLevelProperty
+    rdfs:label "Grad da picant"@rm ;
+    sh:description "0 è mild, 5 na sa emblida betg."@rm ;
+    sh:message "Il grad da picant va da 0 fin 5."@rm .
+
+food:RamenToppingsProperty
+    rdfs:label "Garniziuns"@rm ;
+    sh:description "Fin a tschintg. Chashu ed ajitama n'èn betg disponibels cun in bragl vegan."@rm ;
+    sh:message "Tscherna maximalmain tschintg garniziuns."@rm .
+
+food:RamenExtraNoodlesProperty
+    rdfs:label "Tagliarins supplementars (kaedama)"@rm ;
+    sh:description "Ina segunda porziun da tagliarins, servida uschespert che ti la dumondas."@rm .
+
+# ---------------------------------------------------------------------------
+# Poke Bowl
+# ---------------------------------------------------------------------------
+
+food:PokeBowlOrderShape rdfs:label "Orden da poke bowl"@rm .
+
+food:PokeBaseProperty
+    rdfs:label "Basa"@rm ;
+    sh:description "Quai che stat al fund da la scadiola."@rm ;
+    sh:message "Tscherna exactamain ina basa."@rm .
+
+food:PokeProteinsProperty
+    rdfs:label "Proteina"@rm ;
+    sh:description "Ina u duas. Maschadar salm e tun è permess, schizunt recumandà."@rm ;
+    sh:message "Tscherna ina u duas proteinas."@rm .
+
+food:PokeDressingProperty
+    rdfs:label "Salsa"@rm ;
+    sh:description "Vegn versada sur tut la scadiola pauc avant che serrar."@rm ;
+    sh:message "Tscherna exactamain ina salsa."@rm .
+
+food:PokeCrunchProperty
+    rdfs:label "Croccant"@rm ;
+    sh:description "Vegn sprinzlà survart. Fin a trais."@rm ;
+    sh:message "Tscherna maximalmain trais elements croccants."@rm .
+
+# ---------------------------------------------------------------------------
+# Option terms
+# ---------------------------------------------------------------------------
+
+food:M  rdfs:label "M (30 cm)"@rm .
+food:L  rdfs:label "L (40 cm)"@rm .
+food:XL rdfs:label "XL (50 cm)"@rm .
+
+food:nuggets rdfs:label "Nuggets da giaglina"@rm .
+
+food:samurai rdfs:label "Samouraï (picant)"@rm .
+food:bbq     rdfs:label "Barbecue"@rm .
+food:mayo    rdfs:label "Majonaisa"@rm .
+
+food:fries      rdfs:label "Pommes supplementaras"@rm .
+food:onionRings rdfs:label "Anels da tschagula"@rm .
+
+food:tonkotsu  rdfs:label "Tonkotsu (portg)"@rm .
+food:shoyu     rdfs:label "Shoyu (soja)"@rm .
+food:shio      rdfs:label "Shio (sal)"@rm .
+food:veganMiso rdfs:label "Miso vegan"@rm .
+
+food:soft      rdfs:label "Mols"@rm .
+food:medium    rdfs:label "Mesaun"@rm .
+food:firm      rdfs:label "Ferms"@rm .
+food:extraFirm rdfs:label "Fitg ferms (barikata)"@rm .
+
+food:chashu  rdfs:label "Portg chashu"@rm .
+food:ajitama rdfs:label "Ajitama (ov marinà)"@rm .
+food:menma   rdfs:label "Menma (bambus)"@rm .
+food:corn    rdfs:label "Granatirn dultsch"@rm .
+food:negi    rdfs:label "Tschagula da primavaira"@rm .
+food:butter  rdfs:label "Paint da Hokkaidō"@rm .
+
+food:sushiRice   rdfs:label "Ris per sushi"@rm .
+food:brownRice   rdfs:label "Ris entir"@rm .
+food:mixedGreens rdfs:label "Salata maschadada"@rm .
+food:soba        rdfs:label "Tagliarins soba"@rm .
+
+food:salmon  rdfs:label "Salm"@rm .
+food:tuna    rdfs:label "Tun"@rm .
+food:tofu    rdfs:label "Tofu marinà"@rm .
+food:chicken rdfs:label "Giaglina grigliada"@rm .
+
+food:spicyMayo   rdfs:label "Majonaisa picanta"@rm .
+food:sesameOil   rdfs:label "Ieli da sesam"@rm .
+food:wasabiCream rdfs:label "Crema da wasabi"@rm .
+
+food:crispyOnion rdfs:label "Tschagulas rustidas"@rm .
+food:cashew      rdfs:label "Nuschs da cashew"@rm .
+food:sesameSeeds rdfs:label "Semen da sesam"@rm .
+
+# ---------------------------------------------------------------------------
+# Cross-field rule messages
+# ---------------------------------------------------------------------------
+
+food:TacosTwoMeatsConstraint
+    sh:message "Duas charns van mo en ina tortilla XL - tscherna XL, u lascha ina davent."@rm .
+
+food:RamenVeganToppingConstraint
+    sh:message "Questa garniziun n'è betg disponibla cun in bragl vegan."@rm .
+
+food:PokeVeganDressingConstraint
+    sh:message "Questa salsa n'è betg vegana, mabain tut las proteinas en questa scadiola èn."@rm .
+

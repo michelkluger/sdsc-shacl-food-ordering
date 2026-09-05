@@ -7,9 +7,10 @@ re-implementation of any rule that the shape already states.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 
 from food_api.api.deps import DishDep
+from food_api.api.language import LanguageDep
 from food_api.domain.errors import ShaclValidationError
 from food_api.domain.models import OrderReceipt, OrderRequest
 from food_api.shacl.validate import price_order, validate_order
@@ -30,20 +31,28 @@ router = APIRouter(prefix="/orders", tags=["orders"])
         },
     },
 )
-async def submit_order(dish: DishDep, request: OrderRequest) -> OrderReceipt:
+async def submit_order(
+    dish: DishDep,
+    request: OrderRequest,
+    language: LanguageDep,
+    response: Response,
+) -> OrderReceipt:
     """Validate a submitted form against the dish's SHACL shape.
 
     Nothing is persisted: the task calls for none, and a receipt that is computed rather than
     stored keeps the demo honest about what it does. The order id is minted per request so a
     client can correlate a receipt with its submission.
     """
-    outcome = validate_order(dish, request.data)
+    response.headers["Content-Language"] = language
+
+    outcome = validate_order(dish, request.data, language=language)
     if not outcome.conforms:
         raise ShaclValidationError(dish.slug, outcome.violations)
 
     return OrderReceipt(
         orderId=outcome.order_iri,
         dish=dish.slug,
+        dishName=dish.summary_for(language).name,
         total=float(price_order(dish, request.data)),
         currency=dish.summary.currency,
         data=request.data,

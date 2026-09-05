@@ -30,69 +30,16 @@ food:PokeBowlOrderShape a sh:NodeShape ;
                 food:CustomerNoteProperty ;
 
     # ---- base -----------------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:base ;
-        sh:name "base" ;
-        rdfs:label "Base" ;
-        sh:description "What sits at the bottom of the bowl." ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:in ( food:sushiRice food:brownRice food:mixedGreens food:soba ) ;
-        sh:defaultValue food:sushiRice ;
-        sh:group food:CoreGroup ;
-        sh:order 1 ;
-        sh:message "Choose exactly one base." ;
-    ] ;
+    sh:property food:PokeBaseProperty ;
 
     # ---- proteins: 1..2, a required array ---------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:protein ;
-        sh:name "proteins" ;
-        rdfs:label "Protein" ;
-        sh:description "One or two. Mixing salmon and tuna is allowed and encouraged." ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 2 ;
-        sh:in ( food:salmon food:tuna food:chicken food:tofu food:edamame ) ;
-        sh:group food:CoreGroup ;
-        sh:order 2 ;
-        sh:message "Choose one or two proteins." ;
-    ] ;
+    sh:property food:PokeProteinsProperty ;
 
     # ---- dressing ---------------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:dressing ;
-        sh:name "dressing" ;
-        rdfs:label "Dressing" ;
-        sh:description "Poured over the whole bowl just before it is closed." ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:in ( food:ponzu food:spicyMayo food:sesameOil food:wasabiCream ) ;
-        sh:defaultValue food:ponzu ;
-        sh:group food:CoreGroup ;
-        sh:order 3 ;
-        sh:message "Choose exactly one dressing." ;
-    ] ;
+    sh:property food:PokeDressingProperty ;
 
     # ---- crunch: 0..3 -----------------------------------------------------
-    sh:property [
-        a sh:PropertyShape ;
-        sh:path food:crunch ;
-        sh:name "crunch" ;
-        rdfs:label "Crunch" ;
-        sh:description "Scattered on top. Up to three." ;
-        sh:nodeKind sh:IRI ;
-        sh:maxCount 3 ;
-        sh:in ( food:crispyOnion food:cashew food:sesameSeeds food:furikake ) ;
-        sh:group food:ExtrasGroup ;
-        sh:order 4 ;
-        sh:message "Pick at most three crunchy toppings." ;
-    ] ;
+    sh:property food:PokeCrunchProperty ;
 
     # ---- cross-field rule -------------------------------------------------
     #
@@ -101,26 +48,88 @@ food:PokeBowlOrderShape a sh:NodeShape ;
     # food:excludedByDiet from the vocabulary rather than listing dressings, so annotating a
     # new protein or dressing in food.ttl brings it under this constraint automatically.
     #
-    sh:sparql [
-        a sh:SPARQLConstraint ;
-        rdfs:label "Vegan bowl needs a vegan dressing"@en ;
-        sh:message "{$dressingLabel} is not vegan, but every protein in this bowl is." ;
-        sh:prefixes food:prefixes ;
-        sh:select """
-            SELECT $this ?path ?value ?dressingLabel
-            WHERE {
-                BIND (food:dressing AS ?path)
-                $this food:dressing ?value .
-                ?value food:excludedByDiet "vegan" .
-                OPTIONAL { ?value rdfs:label ?dressingLabel . }
+    sh:sparql food:PokeVeganDressingConstraint .
 
-                # Every chosen protein is vegan-compatible, i.e. none is excluded by a
-                # vegan diet. FILTER NOT EXISTS is the closest SHACL-SPARQL gets to
-                # "for all", and reads correctly for the empty case too.
-                FILTER NOT EXISTS {
-                    $this food:protein ?anyProtein .
-                    ?anyProtein food:excludedByDiet "vegan" .
-                }
+
+#
+# Property shapes, named rather than inline so that data/i18n/<lang>.ttl can attach
+# language-tagged labels, descriptions and messages to them without touching this file.
+#
+
+food:PokeBaseProperty a sh:PropertyShape ;
+    sh:path food:base ;
+    sh:name "base" ;
+    rdfs:label "Base" ;
+    sh:description "What sits at the bottom of the bowl." ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( food:sushiRice food:brownRice food:mixedGreens food:soba ) ;
+    sh:defaultValue food:sushiRice ;
+    sh:group food:CoreGroup ;
+    sh:order 1 ;
+    sh:message "Choose exactly one base." .
+
+food:PokeProteinsProperty a sh:PropertyShape ;
+    sh:path food:protein ;
+    sh:name "proteins" ;
+    rdfs:label "Protein" ;
+    sh:description "One or two. Mixing salmon and tuna is allowed and encouraged." ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 2 ;
+    sh:in ( food:salmon food:tuna food:chicken food:tofu food:edamame ) ;
+    sh:group food:CoreGroup ;
+    sh:order 2 ;
+    sh:message "Choose one or two proteins." .
+
+food:PokeDressingProperty a sh:PropertyShape ;
+    sh:path food:dressing ;
+    sh:name "dressing" ;
+    rdfs:label "Dressing" ;
+    sh:description "Poured over the whole bowl just before it is closed." ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ( food:ponzu food:spicyMayo food:sesameOil food:wasabiCream ) ;
+    sh:defaultValue food:ponzu ;
+    sh:group food:CoreGroup ;
+    sh:order 3 ;
+    sh:message "Choose exactly one dressing." .
+
+food:PokeCrunchProperty a sh:PropertyShape ;
+    sh:path food:crunch ;
+    sh:name "crunch" ;
+    rdfs:label "Crunch" ;
+    sh:description "Scattered on top. Up to three." ;
+    sh:nodeKind sh:IRI ;
+    sh:maxCount 3 ;
+    sh:in ( food:crispyOnion food:cashew food:sesameSeeds food:furikake ) ;
+    sh:group food:ExtrasGroup ;
+    sh:order 4 ;
+    sh:message "Pick at most three crunchy toppings." .
+
+
+#
+# Cross-field constraint, named so that data/i18n/<lang>.ttl can translate its message.
+#
+food:PokeVeganDressingConstraint a sh:SPARQLConstraint ;
+    rdfs:label "Vegan bowl needs a vegan dressing"@en ;
+    sh:message "This dressing is not vegan, but every protein in this bowl is." ;
+    sh:prefixes food:prefixes ;
+    sh:select """
+        SELECT $this ?path ?value
+        WHERE {
+            BIND (food:dressing AS ?path)
+            $this food:dressing ?value .
+            ?value food:excludedByDiet "vegan" .
+
+            # Every chosen protein is vegan-compatible, i.e. none is excluded by a vegan diet.
+            # FILTER NOT EXISTS is the closest SHACL-SPARQL gets to "for all", and reads
+            # correctly for the empty case too.
+            FILTER NOT EXISTS {
+                $this food:protein ?anyProtein .
+                ?anyProtein food:excludedByDiet "vegan" .
             }
-        """ ;
-    ] .
+        }
+    """ .

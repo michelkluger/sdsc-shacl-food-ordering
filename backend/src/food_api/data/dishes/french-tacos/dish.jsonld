@@ -3,13 +3,43 @@
   "id": "food:french-tacos",
   "type": "food:Dish",
   "slug": "french-tacos",
-  "name": "French Tacos",
-  "description": "The Lyonnais street-food classic: a folded, grilled wheat tortilla stuffed with meat, fries and a molten cheese sauce. Nothing whatsoever to do with a Mexican taco.",
-  "cuisine": "French",
+  "name": {
+    "@none": "French Tacos",
+    "de": "French Tacos",
+    "fr": "Tacos français",
+    "it": "Tacos francese",
+    "rm": "Tacos franzos"
+  },
+  "description": {
+    "en": "The Lyonnais street-food classic: a folded, grilled wheat tortilla stuffed with meat, fries and a molten cheese sauce. Nothing whatsoever to do with a Mexican taco.",
+    "de": "Der Street-Food-Klassiker aus Lyon: eine gefaltete, gegrillte Weizentortilla mit Fleisch, Pommes und geschmolzener Käsesauce. Hat mit einem mexikanischen Taco nichts zu tun.",
+    "fr": "Le classique lyonnais de la street food : une galette de blé pliée et grillée, garnie de viande, de frites et d'une sauce fromagère fondue. Rien à voir avec un taco mexicain.",
+    "it": "Il classico street food lionese: una piadina di grano piegata e grigliata, farcita con carne, patatine e salsa al formaggio fusa. Non ha nulla a che vedere con un taco messicano.",
+    "rm": "Il classic da street food da Lyon: ina tortilla da furment plegada e grigliada, emplenida cun charn, pommes ed ina salsa da chaschiel loscha. N'ha nagut a che far cun in taco mexican."
+  },
+  "cuisine": {
+    "en": "French",
+    "de": "Französisch",
+    "fr": "Français",
+    "it": "Francese",
+    "rm": "Franzos"
+  },
   "basePrice": 12.5,
   "currency": "CHF",
   "image": "/static/img/french-tacos.svg",
-  "tag": ["street food", "grilled", "comfort food", "cheese sauce", "fries"],
-  "diet": ["halal-available", "vegetarian-available"],
-  "allergen": ["gluten", "milk"]
+  "tag": [
+    "street food",
+    "grilled",
+    "comfort food",
+    "cheese sauce",
+    "fries"
+  ],
+  "diet": [
+    "halal-available",
+    "vegetarian-available"
+  ],
+  "allergen": [
+    "gluten",
+    "milk"
+  ]
 }
