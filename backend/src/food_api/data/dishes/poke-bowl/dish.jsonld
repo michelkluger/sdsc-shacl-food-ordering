@@ -1,0 +1,15 @@
+{
+  "@context": "https://sdsc.example/ns/food/context/base.jsonld",
+  "id": "food:poke-bowl",
+  "type": "food:Dish",
+  "slug": "poke-bowl",
+  "name": "Poke Bowl",
+  "description": "Hawaiian by way of Japan: a bowl of rice or greens under raw fish or tofu, dressed and finished with something crunchy. Built to be light, and easy to make vegan.",
+  "cuisine": "Hawaiian",
+  "basePrice": 18.5,
+  "currency": "CHF",
+  "image": "/static/img/poke-bowl.svg",
+  "tag": ["bowl", "raw fish", "fresh", "light", "gluten-free-available"],
+  "diet": ["vegan-available", "vegetarian-available", "pescatarian"],
+  "allergen": ["soy"]
+}

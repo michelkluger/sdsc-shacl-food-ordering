@@ -1,0 +1,126 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Order shape for a poke bowl - the third dish.
+#
+# This file and the dish.jsonld beside it are the entire addition. No Python, no TypeScript,
+# no route, no test was written to support this dish: the catalogue discovers it, the
+# translator builds its form, the contract suite picks it up from the filesystem, and
+# Meilisearch indexes it on the next seed.
+#
+# It exercises two things the first two dishes do not, to show the translator generalises
+# rather than having been fitted to them:
+#   - a required multi-valued property with a lower bound above zero (1..2 proteins);
+#   - a cross-field rule keyed on a *count* of annotated values rather than on one field's
+#     value, reading food:excludedByDiet from the vocabulary.
+#
+
+food:PokeBowlOrderShape a sh:NodeShape ;
+    rdfs:label "Poke bowl order"@en ;
+    sh:targetClass food:Order ;
+    sh:closed true ;
+    sh:ignoredProperties ( <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> food:dish ) ;
+
+    sh:property food:QuantityProperty ,
+                food:CustomerNameProperty ,
+                food:PickupTimeProperty ,
+                food:CustomerNoteProperty ;
+
+    # ---- base -----------------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:base ;
+        sh:name "base" ;
+        rdfs:label "Base" ;
+        sh:description "What sits at the bottom of the bowl." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( food:sushiRice food:brownRice food:mixedGreens food:soba ) ;
+        sh:defaultValue food:sushiRice ;
+        sh:group food:CoreGroup ;
+        sh:order 1 ;
+        sh:message "Choose exactly one base." ;
+    ] ;
+
+    # ---- proteins: 1..2, a required array ---------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:protein ;
+        sh:name "proteins" ;
+        rdfs:label "Protein" ;
+        sh:description "One or two. Mixing salmon and tuna is allowed and encouraged." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 2 ;
+        sh:in ( food:salmon food:tuna food:chicken food:tofu food:edamame ) ;
+        sh:group food:CoreGroup ;
+        sh:order 2 ;
+        sh:message "Choose one or two proteins." ;
+    ] ;
+
+    # ---- dressing ---------------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:dressing ;
+        sh:name "dressing" ;
+        rdfs:label "Dressing" ;
+        sh:description "Poured over the whole bowl just before it is closed." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( food:ponzu food:spicyMayo food:sesameOil food:wasabiCream ) ;
+        sh:defaultValue food:ponzu ;
+        sh:group food:CoreGroup ;
+        sh:order 3 ;
+        sh:message "Choose exactly one dressing." ;
+    ] ;
+
+    # ---- crunch: 0..3 -----------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:crunch ;
+        sh:name "crunch" ;
+        rdfs:label "Crunch" ;
+        sh:description "Scattered on top. Up to three." ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 3 ;
+        sh:in ( food:crispyOnion food:cashew food:sesameSeeds food:furikake ) ;
+        sh:group food:ExtrasGroup ;
+        sh:order 4 ;
+        sh:message "Pick at most three crunchy toppings." ;
+    ] ;
+
+    # ---- cross-field rule -------------------------------------------------
+    #
+    # A bowl whose proteins are all plant-based is a vegan order, so a dressing that is not
+    # vegan contradicts it. The rule counts proteins rather than naming any, and reads
+    # food:excludedByDiet from the vocabulary rather than listing dressings, so annotating a
+    # new protein or dressing in food.ttl brings it under this constraint automatically.
+    #
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        rdfs:label "Vegan bowl needs a vegan dressing"@en ;
+        sh:message "{$dressingLabel} is not vegan, but every protein in this bowl is." ;
+        sh:prefixes food:prefixes ;
+        sh:select """
+            SELECT $this ?path ?value ?dressingLabel
+            WHERE {
+                BIND (food:dressing AS ?path)
+                $this food:dressing ?value .
+                ?value food:excludedByDiet "vegan" .
+                OPTIONAL { ?value rdfs:label ?dressingLabel . }
+
+                # Every chosen protein is vegan-compatible, i.e. none is excluded by a
+                # vegan diet. FILTER NOT EXISTS is the closest SHACL-SPARQL gets to
+                # "for all", and reads correctly for the empty case too.
+                FILTER NOT EXISTS {
+                    $this food:protein ?anyProtein .
+                    ?anyProtein food:excludedByDiet "vegan" .
+                }
+            }
+        """ ;
+    ] .
