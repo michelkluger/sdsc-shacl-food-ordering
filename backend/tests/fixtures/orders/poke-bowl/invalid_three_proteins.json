@@ -1,0 +1,12 @@
+{
+  "description": "sh:maxCount: three proteins where two are allowed.",
+  "expectedPointers": ["/proteins"],
+  "expectedConstraint": "MaxCountConstraintComponent",
+  "data": {
+    "base": "sushiRice",
+    "proteins": ["salmon", "tuna", "chicken"],
+    "dressing": "ponzu",
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}

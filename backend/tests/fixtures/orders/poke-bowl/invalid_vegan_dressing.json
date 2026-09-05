@@ -1,0 +1,12 @@
+{
+  "description": "sh:sparql cross-field rule: an all-plant bowl cannot take a non-vegan dressing.",
+  "expectedPointers": ["/dressing"],
+  "expectedConstraint": "SPARQLConstraintComponent",
+  "data": {
+    "base": "mixedGreens",
+    "proteins": ["tofu", "edamame"],
+    "dressing": "spicyMayo",
+    "quantity": 1,
+    "customerName": "Sam"
+  }
+}

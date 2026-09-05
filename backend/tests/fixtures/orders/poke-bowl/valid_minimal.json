@@ -1,0 +1,10 @@
+{
+  "description": "Only the required fields.",
+  "data": {
+    "base": "brownRice",
+    "proteins": ["chicken"],
+    "dressing": "sesameOil",
+    "quantity": 1,
+    "customerName": "Lee"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "description": "An all-plant bowl with a vegan dressing. Conforms, and is the case the cross-field rule must not fire on.",
+  "data": {
+    "base": "mixedGreens",
+    "proteins": ["tofu", "edamame"],
+    "dressing": "ponzu",
+    "crunch": ["sesameSeeds"],
+    "quantity": 2,
+    "customerName": "Sam"
+  }
+}

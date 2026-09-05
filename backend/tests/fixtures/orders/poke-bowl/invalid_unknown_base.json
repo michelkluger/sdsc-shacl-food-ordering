@@ -1,0 +1,12 @@
+{
+  "description": "sh:in: a base that is not on the menu.",
+  "expectedPointers": ["/base"],
+  "expectedConstraint": "InConstraintComponent",
+  "data": {
+    "base": "mashedPotato",
+    "proteins": ["tofu"],
+    "dressing": "ponzu",
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}

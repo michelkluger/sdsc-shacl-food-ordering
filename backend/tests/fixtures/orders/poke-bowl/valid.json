@@ -1,0 +1,12 @@
+{
+  "description": "A complete poke bowl with two proteins and a non-vegan dressing, which is fine because the proteins are not vegan either.",
+  "data": {
+    "base": "sushiRice",
+    "proteins": ["salmon", "tuna"],
+    "dressing": "spicyMayo",
+    "crunch": ["cashew", "furikake"],
+    "quantity": 1,
+    "customerName": "Ana",
+    "pickupTime": "2026-09-05T13:00:00+02:00"
+  }
+}

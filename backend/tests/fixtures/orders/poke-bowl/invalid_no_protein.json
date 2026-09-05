@@ -1,0 +1,11 @@
+{
+  "description": "sh:minCount on a required multi-valued property.",
+  "expectedPointers": ["/proteins"],
+  "expectedConstraint": "MinCountConstraintComponent",
+  "data": {
+    "base": "sushiRice",
+    "dressing": "ponzu",
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}
