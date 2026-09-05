@@ -178,7 +178,9 @@ describe('option cards, for short enumerations', () => {
     renderForm()
 
     await user.click(await screen.findByRole('radio', { name: 'Thick' }))
-    expect(screen.getByRole('radio', { name: 'Thick' })).toHaveAttribute('aria-checked', 'true')
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: 'Thick' })).toHaveAttribute('aria-checked', 'true'),
+    )
   })
 })
 
@@ -197,11 +199,14 @@ describe('chip multi-select, for arrays of enumerated values', () => {
     renderForm()
 
     const sprig = await screen.findByRole('button', { name: /Sprig/ })
+
+    // `waitFor` rather than a bare assertion: the click resolves before React has necessarily
+    // re-rendered, which passes on a fast machine and fails on a loaded CI runner.
     await user.click(sprig)
-    expect(sprig).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(sprig).toHaveAttribute('aria-pressed', 'true'))
 
     await user.click(sprig)
-    expect(sprig).toHaveAttribute('aria-pressed', 'false')
+    await waitFor(() => expect(sprig).toHaveAttribute('aria-pressed', 'false'))
   })
 
   it('shows how many of the allowed maximum are chosen', async () => {
@@ -233,7 +238,12 @@ describe('chip multi-select, for arrays of enumerated values', () => {
     await user.click(await screen.findByRole('button', { name: /Sprig/ }))
     await user.click(await screen.findByRole('button', { name: 'Clear' }))
 
-    expect(screen.getByRole('button', { name: /Sprig/ })).toHaveAttribute('aria-pressed', 'false')
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Sprig/ })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      ),
+    )
   })
 })
 
