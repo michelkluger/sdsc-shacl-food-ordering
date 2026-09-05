@@ -127,7 +127,7 @@ def _one(graph: Graph, subject: Node, predicate: URIRef) -> Node | None:
 
 def _int(graph: Graph, subject: Node, predicate: URIRef) -> int | None:
     raw = _one(graph, subject, predicate)
-    return int(raw) if isinstance(raw, Literal) else None  # ty: ignore[invalid-argument-type]
+    return int(raw) if isinstance(raw, Literal) else None
 
 
 def _decimal(graph: Graph, subject: Node, predicate: URIRef) -> Decimal | None:
@@ -162,7 +162,7 @@ def _read_in_list(graph: Graph, property_shape: Node) -> tuple[OptionTerm, ...]:
     head = _one(graph, property_shape, SH["in"])
     if head is None:
         return ()
-    members = list(Collection(graph, head))  # ty: ignore[invalid-argument-type]
+    members = list(Collection(graph, head))
     return tuple(_read_option(graph, member) for member in members)
 
 

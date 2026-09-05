@@ -1,0 +1,11 @@
+{
+  "description": "sh:pattern and sh:minLength on the shared customer name shape.",
+  "expectedPointers": ["/customerName"],
+  "expectedConstraint": "MinLengthConstraintComponent",
+  "data": {
+    "size": "L",
+    "meats": ["kebab"],
+    "quantity": 1,
+    "customerName": " "
+  }
+}

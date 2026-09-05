@@ -1,0 +1,11 @@
+{
+  "description": "sh:sparql cross-field rule: two meats require an XL tortilla.",
+  "expectedPointers": ["/size"],
+  "expectedConstraint": "SPARQLConstraintComponent",
+  "data": {
+    "size": "M",
+    "meats": ["kebab", "cordonBleu"],
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "description": "sh:maxCount: four sauces where three are allowed.",
+  "expectedPointers": ["/sauces"],
+  "expectedConstraint": "MaxCountConstraintComponent",
+  "data": {
+    "size": "L",
+    "meats": ["kebab"],
+    "sauces": ["bbq", "mayo", "ketchup", "harissa"],
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}

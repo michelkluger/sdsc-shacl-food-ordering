@@ -1,0 +1,14 @@
+{
+  "description": "A complete, conforming ramen order exercising every optional field.",
+  "data": {
+    "broth": "tonkotsu",
+    "noodleFirmness": "extraFirm",
+    "spiceLevel": 4,
+    "toppings": ["chashu", "ajitama", "nori", "negi"],
+    "extraNoodles": true,
+    "quantity": 2,
+    "customerName": "Michel",
+    "pickupTime": "2026-09-05T18:30:00+02:00",
+    "customerNote": "Extra napkins please."
+  }
+}

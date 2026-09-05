@@ -1,0 +1,12 @@
+{
+  "description": "sh:in: a value outside the allowed option list.",
+  "expectedPointers": ["/broth"],
+  "expectedConstraint": "InConstraintComponent",
+  "data": {
+    "broth": "bordelaise",
+    "noodleFirmness": "firm",
+    "spiceLevel": 2,
+    "quantity": 1,
+    "customerName": "Michel"
+  }
+}

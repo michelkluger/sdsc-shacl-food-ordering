@@ -1,0 +1,13 @@
+{
+  "description": "sh:maxCount on a multi-valued property.",
+  "expectedPointers": ["/toppings"],
+  "expectedConstraint": "MaxCountConstraintComponent",
+  "data": {
+    "broth": "shoyu",
+    "noodleFirmness": "firm",
+    "spiceLevel": 2,
+    "toppings": ["chashu", "ajitama", "nori", "menma", "corn", "negi"],
+    "quantity": 1,
+    "customerName": "Michel"
+  }
+}

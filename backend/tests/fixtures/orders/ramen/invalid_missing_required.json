@@ -1,0 +1,11 @@
+{
+  "description": "sh:minCount: a required property is absent entirely.",
+  "expectedPointers": ["/broth"],
+  "expectedConstraint": "MinCountConstraintComponent",
+  "data": {
+    "noodleFirmness": "firm",
+    "spiceLevel": 2,
+    "quantity": 1,
+    "customerName": "Michel"
+  }
+}

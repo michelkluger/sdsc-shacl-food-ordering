@@ -85,9 +85,7 @@ def _value_schema(prop: PropertyConstraints) -> dict[str, Any]:
         # vocabulary, so a term is named once and every dish that offers it inherits the name.
         return {
             "type": "string",
-            "oneOf": [
-                {"const": option.token, "title": option.label} for option in prop.options
-            ],
+            "oneOf": [{"const": option.token, "title": option.label} for option in prop.options],
         }
 
     json_type, json_format = _JSON_TYPES.get(prop.datatype or "", ("string", None))
@@ -224,7 +222,6 @@ def _context_entry(prop: PropertyConstraints) -> dict[str, Any]:
     if prop.is_multi_valued:
         entry["@container"] = "@set"
     return entry
-
 
 
 def build_form(

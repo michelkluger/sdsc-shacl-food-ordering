@@ -1,0 +1,10 @@
+{
+  "description": "Only the required fields. Proves optional properties really are optional.",
+  "data": {
+    "broth": "shio",
+    "noodleFirmness": "medium",
+    "spiceLevel": 0,
+    "quantity": 1,
+    "customerName": "Ana"
+  }
+}

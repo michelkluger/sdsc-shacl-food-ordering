@@ -1,0 +1,183 @@
+"""HTTP-level tests.
+
+These run the real app in-process over ASGI, with search stubbed. They cover the wire contract -
+status codes, the problem-details envelope, aliasing - rather than re-testing validation logic
+that ``tests/contract`` already covers per dish.
+"""
+
+from __future__ import annotations
+
+from httpx import AsyncClient
+
+from food_api.domain.errors import PROBLEM_CONTENT_TYPE
+from food_api.search.client import InMemorySearch
+from tests.conftest import load_fixture
+
+HTTP_OK = 200
+HTTP_CREATED = 201
+HTTP_BAD_REQUEST = 400
+HTTP_NOT_FOUND = 404
+HTTP_UNPROCESSABLE = 422
+HTTP_UNAVAILABLE = 503
+
+
+async def test_healthz_reports_components(client: AsyncClient) -> None:
+    response = await client.get("/api/healthz")
+    body = response.json()
+
+    assert response.status_code == HTTP_OK
+    assert body["status"] == "ok"
+    assert {component["name"] for component in body["components"]} == {"catalog", "search"}
+    assert "ramen" in body["dishes"]
+
+
+async def test_healthz_is_degraded_not_down_when_search_is_unreachable(
+    client: AsyncClient,
+    search: InMemorySearch,
+) -> None:
+    search.available = False
+    body = (await client.get("/api/healthz")).json()
+
+    assert body["status"] == "degraded"
+    search_component = next(c for c in body["components"] if c["name"] == "search")
+    assert search_component["status"] == "unavailable"
+
+
+async def test_list_dishes_uses_camel_case_aliases(client: AsyncClient) -> None:
+    body = (await client.get("/api/dishes")).json()
+    assert {dish["slug"] for dish in body} >= {"ramen", "french-tacos"}
+    assert "basePrice" in body[0]
+
+
+async def test_get_form_returns_the_three_generated_artefacts(client: AsyncClient) -> None:
+    response = await client.get("/api/dishes/ramen/form")
+    body = response.json()
+
+    assert response.status_code == HTTP_OK
+    assert body["schema"]["type"] == "object"
+    assert body["uischema"]["type"] == "VerticalLayout"
+    assert body["@context"]["broth"]["@type"] == "@vocab"
+    assert body["shapeIri"].endswith("RamenOrderShape")
+
+
+async def test_unknown_dish_returns_a_problem_listing_what_exists(client: AsyncClient) -> None:
+    response = await client.get("/api/dishes/pizza/form")
+    body = response.json()
+
+    assert response.status_code == HTTP_NOT_FOUND
+    assert response.headers["content-type"].startswith(PROBLEM_CONTENT_TYPE)
+    assert body["type"].endswith("unknown-dish")
+    assert "ramen" in body["availableDishes"]
+
+
+async def test_valid_order_is_accepted_with_a_priced_receipt(client: AsyncClient) -> None:
+    payload = load_fixture("ramen", "valid.json")["data"]
+    response = await client.post("/api/orders/ramen", json={"data": payload})
+    body = response.json()
+
+    assert response.status_code == HTTP_CREATED
+    assert body["accepted"] is True
+    assert body["orderId"].startswith("urn:food:order:")
+    assert body["total"] > 0
+    assert body["currency"] == "CHF"
+    # The receipt echoes what was submitted, so a client can reconcile without re-sending.
+    assert body["data"] == payload
+
+
+async def test_invalid_order_returns_pointered_violations(client: AsyncClient) -> None:
+    fixture = load_fixture("ramen", "invalid_vegan_topping.json")
+    response = await client.post("/api/orders/ramen", json={"data": fixture["data"]})
+    body = response.json()
+
+    assert response.status_code == HTTP_UNPROCESSABLE
+    assert response.headers["content-type"].startswith(PROBLEM_CONTENT_TYPE)
+    assert body["type"].endswith("shacl-validation")
+    assert body["dish"] == "ramen"
+
+    pointers = {violation["pointer"] for violation in body["violations"]}
+    assert "/toppings/1" in pointers
+    assert all(violation["message"] for violation in body["violations"])
+
+
+async def test_order_for_unknown_dish_is_404_not_422(client: AsyncClient) -> None:
+    """The dish is resolved before validation, so a typo in the URL is not a form error."""
+    response = await client.post("/api/orders/pizza", json={"data": {}})
+    assert response.status_code == HTTP_NOT_FOUND
+
+
+async def test_malformed_body_uses_the_same_problem_envelope(client: AsyncClient) -> None:
+    response = await client.post("/api/orders/ramen", json={"data": "not-an-object"})
+    body = response.json()
+
+    assert response.status_code == HTTP_BAD_REQUEST
+    assert body["type"].endswith("malformed-request")
+    assert body["status"] == HTTP_BAD_REQUEST
+
+
+async def test_empty_submission_reports_every_missing_required_field(client: AsyncClient) -> None:
+    response = await client.post("/api/orders/ramen", json={"data": {}})
+    body = response.json()
+
+    assert response.status_code == HTTP_UNPROCESSABLE
+    fields = {violation["field"] for violation in body["violations"]}
+    assert {"broth", "noodleFirmness", "spiceLevel", "quantity", "customerName"} <= fields
+
+
+async def test_a_dish_cannot_be_ordered_against_another_dishs_shape(client: AsyncClient) -> None:
+    """A ramen payload posted to the tacos endpoint must be rejected, not silently accepted."""
+    payload = load_fixture("ramen", "valid.json")["data"]
+    response = await client.post("/api/orders/french-tacos", json={"data": payload})
+    assert response.status_code == HTTP_UNPROCESSABLE
+
+
+async def test_search_returns_hits_and_facets(seeded_client: AsyncClient) -> None:
+    body = (await seeded_client.get("/api/search", params={"q": "ramen"})).json()
+
+    assert body["query"] == "ramen"
+    assert [hit["slug"] for hit in body["hits"]] == ["ramen"]
+    assert body["facets"]["cuisine"] == {"Japanese": 1}
+
+
+async def test_search_finds_a_dish_by_an_option_label(seeded_client: AsyncClient) -> None:
+    """Option labels are indexed, so a dish is findable by something it merely offers."""
+    body = (await seeded_client.get("/api/search", params={"q": "chashu"})).json()
+    assert [hit["slug"] for hit in body["hits"]] == ["ramen"]
+
+
+async def test_search_filters_by_cuisine(seeded_client: AsyncClient) -> None:
+    body = (await seeded_client.get("/api/search", params={"cuisine": "French"})).json()
+    assert [hit["slug"] for hit in body["hits"]] == ["french-tacos"]
+
+
+async def test_search_excludes_dishes_by_allergen(seeded_client: AsyncClient) -> None:
+    body = (await seeded_client.get("/api/search", params={"allergenFree": "gluten"})).json()
+    assert all("gluten" not in hit["allergens"] for hit in body["hits"])
+
+
+async def test_search_degrades_without_taking_the_api_down(
+    client: AsyncClient,
+    search: InMemorySearch,
+) -> None:
+    """The point of the port: search failing must not stop anyone ordering."""
+    search.available = False
+
+    response = await client.get("/api/search", params={"q": "ramen"})
+    body = response.json()
+    assert response.status_code == HTTP_UNAVAILABLE
+    assert body["type"].endswith("search-unavailable")
+
+    payload = load_fixture("ramen", "valid.json")["data"]
+    assert (await client.post("/api/orders/ramen", json={"data": payload})).status_code == (
+        HTTP_CREATED
+    )
+    assert (await client.get("/api/dishes/ramen/form")).status_code == HTTP_OK
+
+
+async def test_search_limit_is_bounded(client: AsyncClient) -> None:
+    assert (await client.get("/api/search", params={"limit": 999})).status_code == HTTP_BAD_REQUEST
+
+
+async def test_openapi_document_is_served(client: AsyncClient) -> None:
+    response = await client.get("/api/openapi.json")
+    assert response.status_code == HTTP_OK
+    assert "/api/orders/{slug}" in response.json()["paths"]

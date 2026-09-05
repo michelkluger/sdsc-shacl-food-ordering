@@ -1,0 +1,12 @@
+{
+  "description": "sh:maxInclusive on an integer property.",
+  "expectedPointers": ["/spiceLevel"],
+  "expectedConstraint": "MaxInclusiveConstraintComponent",
+  "data": {
+    "broth": "miso",
+    "noodleFirmness": "firm",
+    "spiceLevel": 9,
+    "quantity": 1,
+    "customerName": "Michel"
+  }
+}

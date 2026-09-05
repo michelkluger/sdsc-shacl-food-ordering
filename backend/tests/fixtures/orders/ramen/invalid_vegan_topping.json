@@ -1,0 +1,13 @@
+{
+  "description": "sh:sparql cross-field rule: a vegan broth rules out animal toppings.",
+  "expectedPointers": ["/toppings/1"],
+  "expectedConstraint": "SPARQLConstraintComponent",
+  "data": {
+    "broth": "veganMiso",
+    "noodleFirmness": "firm",
+    "spiceLevel": 2,
+    "toppings": ["nori", "chashu"],
+    "quantity": 1,
+    "customerName": "Michel"
+  }
+}

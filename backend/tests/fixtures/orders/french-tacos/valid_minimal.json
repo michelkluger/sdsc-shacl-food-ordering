@@ -1,0 +1,9 @@
+{
+  "description": "Only the required fields.",
+  "data": {
+    "size": "M",
+    "meats": ["falafel"],
+    "quantity": 1,
+    "customerName": "Sam"
+  }
+}

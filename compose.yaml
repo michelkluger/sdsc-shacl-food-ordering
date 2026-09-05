@@ -1,0 +1,83 @@
+# Full stack: Meilisearch, the API, and the JSON Forms frontend.
+#
+#   docker compose up --build          everything, http://localhost:5173
+#   docker compose up -d meilisearch   just the search engine, for local backend development
+#
+# The dev scripts use the second form and run the API and Vite on the host, so a code change
+# does not need an image rebuild.
+
+name: sdsc-food-ordering
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.53.1
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-devMasterKeyChangeMe}
+      MEILI_ENV: ${MEILI_ENV:-development}
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "${MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      # /health is Meilisearch's own readiness endpoint and needs no key. Verified that this
+      # image ships curl at /usr/bin/curl - a healthcheck that silently fails to execute leaves
+      # `condition: service_healthy` hanging until the compose timeout.
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      FOOD_API_MEILI_URL: http://meilisearch:7700
+      FOOD_API_MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-devMasterKeyChangeMe}
+      FOOD_API_CORS_ORIGINS: '["http://localhost:5173","http://localhost:4173","http://localhost:8080"]'
+      FOOD_API_DEBUG: ${FOOD_API_DEBUG:-false}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # One-shot: waits for Meilisearch and indexes the catalogue, then exits. Separated from the
+  # API so the API has no startup side effects and can be scaled or restarted freely.
+  seed:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["food-api", "bootstrap", "--timeout", "90"]
+    environment:
+      FOOD_API_MEILI_URL: http://meilisearch:7700
+      FOOD_API_MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-devMasterKeyChangeMe}
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    restart: "no"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  meili_data:

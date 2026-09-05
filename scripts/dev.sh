@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# Local development: Meilisearch in Docker, the API and Vite on the host with hot reload.
+# Ctrl-C stops both; the Meilisearch container is left running.
+
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+command -v uv >/dev/null 2>&1 || { echo "uv is required." >&2; exit 1; }
+
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
+export FOOD_API_MEILI_URL="http://localhost:${MEILI_PORT:-7700}"
+export FOOD_API_MEILI_MASTER_KEY="${MEILI_MASTER_KEY:-devMasterKeyChangeMe}"
+
+printf '\033[36m==>\033[0m Ensuring Meilisearch is running\n'
+docker compose up -d meilisearch
+
+pids=()
+cleanup() {
+    for pid in "${pids[@]:-}"; do kill "$pid" 2>/dev/null || true; done
+}
+trap cleanup EXIT INT TERM
+
+printf '\033[36m==>\033[0m API on http://localhost:%s (reload)\n' "${API_PORT:-8000}"
+uv run --project backend uvicorn food_api.main:app \
+    --reload --reload-dir backend/src --host 127.0.0.1 --port "${API_PORT:-8000}" &
+pids+=($!)
+
+if command -v bun >/dev/null 2>&1 && [ -d frontend/node_modules ]; then
+    printf '\033[36m==>\033[0m Frontend on http://localhost:%s (hot reload)\n' "${FRONTEND_PORT:-5173}"
+    bun --cwd frontend run dev &
+    pids+=($!)
+else
+    printf '\033[33m==>\033[0m Frontend skipped. Run: bun install --cwd frontend\n'
+fi
+
+wait

@@ -1,0 +1,11 @@
+{
+  "description": "sh:minInclusive on the shared quantity property shape.",
+  "expectedPointers": ["/quantity"],
+  "expectedConstraint": "MinInclusiveConstraintComponent",
+  "data": {
+    "size": "L",
+    "meats": ["kebab"],
+    "quantity": 0,
+    "customerName": "Ana"
+  }
+}

@@ -118,7 +118,9 @@ def _read_summary(slug: str, document: dict[str, Any]) -> DishSummary:
             allergens=_as_list(document.get("allergen")),
         )
     except KeyError as exc:
-        raise CatalogError(f"{slug}/{DISH_DOCUMENT} is missing required key {exc.args[0]!r}") from exc
+        raise CatalogError(
+            f"{slug}/{DISH_DOCUMENT} is missing required key {exc.args[0]!r}"
+        ) from exc
 
 
 class Catalog:

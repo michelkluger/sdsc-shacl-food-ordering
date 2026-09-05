@@ -1,0 +1,14 @@
+{
+  "description": "A complete, conforming French Tacos order.",
+  "data": {
+    "size": "XL",
+    "meats": ["kebab", "merguez"],
+    "sauces": ["algerienne", "harissa"],
+    "extraCheese": true,
+    "supplement": "fries",
+    "quantity": 2,
+    "customerName": "Ana",
+    "pickupTime": "2026-09-05T12:15:00+02:00",
+    "customerNote": "Cut in half."
+  }
+}

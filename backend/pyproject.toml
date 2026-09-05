@@ -75,7 +75,11 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "ANN201", "ANN001", "PLR2004"]
+# S101: assert IS the point of a test.
+# S105/S106: bandit flags any argument named `token`; ours is a vocabulary option token.
+# ANN001/ANN201: test functions and their fixtures are self-describing.
+# PLR2004: an expected value inline in an assertion is clearer than a named constant.
+"tests/**" = ["S101", "S105", "S106", "ANN001", "ANN201", "PLR2004"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -87,7 +91,8 @@ mypy-init-return = true
 
 [tool.ty.environment]
 python-version = "3.13"
-root = ["./src"]
+# `.` as well as `./src` so the test package's own `tests.conftest` imports resolve.
+root = ["./src", "."]
 
 [tool.ty.src]
 include = ["src", "tests"]
@@ -112,7 +117,15 @@ addopts = [
 markers = [
     "integration: requires a live Meilisearch instance (deselect with '-m \"not integration\"')",
 ]
-filterwarnings = ["error", "ignore::DeprecationWarning:pyshacl.*"]
+filterwarnings = [
+    # Warnings are errors: a DeprecationWarning raised inside rdflib's JSON-LD parser would
+    # otherwise surface in production as an unexplained "payload could not be read".
+    "error",
+    # rdflib 7.6 still builds a ConjunctiveGraph internally when parsing JSON-LD and warns
+    # about its own deprecation. Nothing here constructs one; remove when rdflib stops.
+    "ignore:ConjunctiveGraph is deprecated:DeprecationWarning",
+    "ignore::DeprecationWarning:pyshacl.*",
+]
 
 [tool.coverage.run]
 source = ["food_api"]

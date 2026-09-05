@@ -1,0 +1,13 @@
+{
+  "description": "sh:closed: a field the shape does not declare.",
+  "expectedPointers": ["/secretDiscount"],
+  "expectedConstraint": "ClosedConstraintComponent",
+  "data": {
+    "broth": "shio",
+    "noodleFirmness": "firm",
+    "spiceLevel": 2,
+    "quantity": 1,
+    "customerName": "Michel",
+    "secretDiscount": "free"
+  }
+}
