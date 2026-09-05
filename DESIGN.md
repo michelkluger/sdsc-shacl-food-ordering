@@ -297,6 +297,24 @@ is the authority on everything.
 own optimistic message, and the vanilla renderers concatenate them. Distinguishable
 programmatically (`keyword: 'shacl'`), not visually.
 
+**Icons are SVG, not Unicode glyphs.** `☀` (U+2600) has an emoji presentation, so Windows and
+Chrome render it through Segoe UI Emoji as a full-colour **orange** sun — a colour from nowhere
+sitting in a masthead built on SDSC indigo. A variation selector only asks nicely; inline SVG
+drawing with `currentColor` is the only way to guarantee an icon takes the theme's colour.
+
+**Text on the accent is a token, not `#fff`.** In dark mode the accent is a *light* indigo,
+where white text measures **2.87:1** and fails WCAG AA. `--on-accent` is white in light mode and
+dark navy in dark mode, which measures 6.41:1. Hardcoding white was the kind of mistake that
+only shows up when you compute the ratio.
+
+**Client-side validation is switched off entirely.** JSON Forms' `validationMode` is
+`NoValidation`, and only the server's violations are displayed. This follows from SHACL being
+the authority, and it fixes two things at once: Ajv was marking every required field red on
+first render, before the user had typed anything, and labelling them with untranslated English
+("is a required property") inside a UI that is otherwise localised into five languages.
+`additionalErrors` are unaffected by that mode, so the server's messages still land on their
+controls.
+
 **The summary duplicates the price, on purpose.** It shows the total beside the form *and* a
 compact problem count, while the form itself carries the full violation notice. Two places
 saying the same thing is usually a smell; here the summary is sticky and the notice is not, so

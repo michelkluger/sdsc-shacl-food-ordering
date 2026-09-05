@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { ApiError, getForm, submitOrder } from './api'
 import type { FormDefinition, OrderReceipt, Violation } from './api'
+import { CheckIcon } from './Icon'
 import { OrderSummary } from './OrderSummary'
 import { renderers } from './renderers'
 import { useUi } from './ui-context'
@@ -131,8 +132,8 @@ export function DishForm({ slug }: Props) {
   if (status.kind === 'accepted') {
     return (
       <section className="panel receipt" role="status">
-        <span className="receipt__tick" aria-hidden="true">
-          ✓
+        <span className="receipt__tick">
+          <CheckIcon />
         </span>
         <h2>{t('orderAccepted')}</h2>
         <p className="receipt__dish">{status.receipt.dishName}</p>
@@ -189,6 +190,12 @@ export function DishForm({ slug }: Props) {
             renderers={renderers}
             cells={vanillaCells}
             additionalErrors={additionalErrors}
+          // Ajv's own client-side validation is switched off, and only the server's violations
+          // are shown. This follows from SHACL being the authority: Ajv would otherwise mark
+          // every required field red before the user has typed anything, and label them with
+          // untranslated English ("is a required property") in a UI that is otherwise fully
+          // localised. `additionalErrors` are unaffected by this mode.
+          validationMode="NoValidation"
             onChange={({ data: next }) => setData(next as Record<string, unknown>)}
           />
         </JsonFormsStyleContext.Provider>

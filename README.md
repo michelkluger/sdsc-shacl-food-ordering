@@ -212,7 +212,7 @@ The setup scripts are thin on purpose: they check prerequisites and delegate to 
 | Lint | `ruff` — ~20 rule families incl. bugbear, bandit, pylint, pathlib |
 | Types | `ty` (Astral) on `src` and `tests` |
 | Backend tests | 378, coverage gate at 85% |
-| Frontend | eslint + `tsc --noEmit` + 69 vitest tests |
+| Frontend | eslint + `tsc --noEmit` + 72 vitest tests |
 | CI | 4 jobs: lint · tests (Meilisearch **service container**, so integration tests really run) · frontend · a Docker stack smoke test that re-checks this README's claims |
 
 ---

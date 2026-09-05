@@ -20,6 +20,7 @@ import { and, isEnumSchema, rankWith, schemaMatches, uiTypeIs } from '@jsonforms
 import { withJsonFormsControlProps } from '@jsonforms/react'
 import { useCallback, useMemo } from 'react'
 
+import { CheckIcon, PlusIcon } from '../Icon'
 import { useUi } from '../ui-context'
 
 interface Option {
@@ -103,8 +104,8 @@ export function ChipMultiSelectControl({
               title={isBlocked && maxItems ? t('atMost', { n: maxItems }) : undefined}
               onClick={() => toggle(option.const)}
             >
-              <span className="chip__mark" aria-hidden="true">
-                {isSelected ? '✓' : '+'}
+              <span className="chip__mark">
+                {isSelected ? <CheckIcon /> : <PlusIcon />}
               </span>
               {option.title ?? option.const}
             </button>

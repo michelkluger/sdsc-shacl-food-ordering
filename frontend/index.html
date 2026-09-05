@@ -8,6 +8,25 @@
       name="description"
       content="A food ordering demo whose every form field comes from a SHACL shape on the server."
     />
+
+    <!--
+      The two faces datascience.ch uses: Space Grotesk for headings, Switzer for body text.
+      Linked here rather than @import-ed from the stylesheet, because a CSS @import cannot
+      start downloading until the stylesheet itself has arrived - it serialises two round trips
+      that could have run in parallel. The preconnects open the sockets earlier still.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://api.fontshare.com/v2/css?f%5B%5D=switzer@400,500,600,700&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>

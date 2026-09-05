@@ -164,6 +164,38 @@ describe('rendering an unknown dish', () => {
   })
 })
 
+describe("validation is the server's job", () => {
+  it('shows nothing red on a form nobody has touched yet', async () => {
+    // Ajv would otherwise mark every required field invalid on first render, before the user
+    // has done anything, which reads as "you got it wrong" for simply arriving on the page.
+    renderIn('en')
+    await screen.findByRole('heading', { name: 'Blorp Stew' })
+
+    expect(document.querySelectorAll('.field--invalid')).toHaveLength(0)
+  })
+
+  it("never shows Ajv's untranslated English messages", async () => {
+    // The whole UI is localised into five languages; "is a required property" is not, and it
+    // would appear verbatim in a Romansh form. SHACL is the authority, so only its messages
+    // are shown - and those arrive already translated.
+    renderIn('en')
+    await screen.findByRole('heading', { name: 'Blorp Stew' })
+
+    expect(screen.queryByText(/is a required property/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/must be/i)).not.toBeInTheDocument()
+  })
+
+  it("still shows the server's messages once it has spoken", async () => {
+    vi.spyOn(api, 'submitOrder').mockRejectedValue(rejection([violation()]))
+    const user = userEvent.setup()
+    renderIn('en')
+
+    await user.click(await screen.findByRole('button', { name: 'Place order' }))
+    expect(await screen.findByText(/No more than four blorps\./)).toBeInTheDocument()
+    expect(document.querySelectorAll('.field--invalid').length).toBeGreaterThan(0)
+  })
+})
+
 describe('option cards, for short enumerations', () => {
   it('renders every option as a visible choice rather than hiding them in a dropdown', async () => {
     renderForm()

@@ -5,15 +5,23 @@
  * reachable after someone has picked one. Same shape as the language switcher beside it.
  */
 
+import { ContrastIcon, MoonIcon, SunIcon } from './Icon'
+import type { IconComponent } from './Icon'
 import { THEMES } from './theme'
 import type { Theme } from './theme'
 import { useUi } from './ui-context'
 
-const ICONS: Record<Theme, string> = {
-  system: '◐',
-  light: '☀',
-  dark: '☾',
+const ICONS: Record<Theme, IconComponent> = {
+  system: ContrastIcon,
+  light: SunIcon,
+  dark: MoonIcon,
 }
+
+const LABEL_KEYS = {
+  system: 'themeSystem',
+  light: 'themeLight',
+  dark: 'themeDark',
+} as const
 
 interface Props {
   current: Theme
@@ -25,20 +33,24 @@ export function ThemeToggle({ current, onChange }: Props) {
 
   return (
     <div className="themes" role="group" aria-label={t('themeLabel')}>
-      {THEMES.map((theme) => (
-        <button
-          key={theme}
-          type="button"
-          className={`theme${theme === current ? ' theme--on' : ''}`}
-          aria-pressed={theme === current}
-          // The glyph is decorative; the accessible name is the word.
-          aria-label={t(theme === 'system' ? 'themeSystem' : theme === 'light' ? 'themeLight' : 'themeDark')}
-          title={t(theme === 'system' ? 'themeSystem' : theme === 'light' ? 'themeLight' : 'themeDark')}
-          onClick={() => onChange(theme)}
-        >
-          <span aria-hidden="true">{ICONS[theme]}</span>
-        </button>
-      ))}
+      {THEMES.map((theme) => {
+        const Glyph = ICONS[theme]
+        const name = t(LABEL_KEYS[theme])
+        return (
+          <button
+            key={theme}
+            type="button"
+            className={`theme${theme === current ? ' theme--on' : ''}`}
+            aria-pressed={theme === current}
+            // The icon is decorative; the accessible name is the word.
+            aria-label={name}
+            title={name}
+            onClick={() => onChange(theme)}
+          >
+            <Glyph />
+          </button>
+        )
+      })}
     </div>
   )
 }

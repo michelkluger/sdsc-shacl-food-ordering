@@ -7,7 +7,12 @@
  * the schema the server generated, so this file styles kinds of control, never particular ones.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap');
+/*
+ * Both faces datascience.ch uses - Space Grotesk for headings, Switzer for body text - are
+ * loaded by <link> in index.html rather than @import-ed here, so they download in parallel
+ * with this stylesheet instead of after it. Naming Switzer in the stack without loading it, as
+ * this file did at first, silently fell back to a system sans and stopped matching their type.
+ */
 
 :root {
   --sdsc-primary: #5561a6;
@@ -29,6 +34,12 @@
   --accent: var(--sdsc-primary);
   --accent-dark: var(--sdsc-primary-dark);
   --accent-wash: var(--sdsc-primary-light);
+  /*
+   * Text placed on the accent colour. It cannot simply be white: in dark mode the accent is a
+   * *light* indigo, where white text measures 2.87:1 and fails WCAG AA. Dark navy on that same
+   * background measures 6.41:1.
+   */
+  --on-accent: #ffffff;
   --danger: #b3261e;
   --danger-wash: #fdf0ef;
   --ok: #2c6e49;
@@ -66,6 +77,7 @@
     --accent: #8a94d8;
     --accent-dark: #a8b0e8;
     --accent-wash: #24243a;
+    --on-accent: #14131c;
     --danger: #f2a49c;
     --danger-wash: #2c1c1c;
     --ok: #86c9a4;
@@ -86,6 +98,7 @@
   --accent: #8a94d8;
   --accent-dark: #a8b0e8;
   --accent-wash: #24243a;
+  --on-accent: #14131c;
   --danger: #f2a49c;
   --danger-wash: #2c1c1c;
   --ok: #86c9a4;
@@ -265,7 +278,7 @@ button {
 
 .lang--on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .themes {
@@ -294,7 +307,7 @@ button {
 
 .theme--on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .masthead__controls {
@@ -496,6 +509,10 @@ button {
   }
 
   .summary__total {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
     border-top: none;
     padding-top: 0;
     margin-bottom: 0.6rem;
@@ -572,9 +589,8 @@ button {
 
 .summary__total {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.1rem;
   margin-top: 0.9rem;
   padding-top: 0.9rem;
   border-top: 1px solid var(--line);
@@ -592,6 +608,8 @@ button {
   font-size: 1.5rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  /* The amount and its currency are one token; wrapping between them reads as two numbers. */
+  white-space: nowrap;
 }
 
 .summary__submit {
@@ -656,7 +674,7 @@ button {
 
 .button--primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .button--primary:hover:not(:disabled) {
@@ -720,7 +738,7 @@ button {
   height: 2.75rem;
   border-radius: 50%;
   background: var(--ok);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 1.4rem;
   margin-bottom: 0.75rem;
 }
@@ -850,12 +868,12 @@ button {
 .chip--on {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .chip--on:hover:not(:disabled) {
   background: var(--accent-dark);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .chip:disabled {
@@ -922,7 +940,7 @@ button {
 
 .stepper__button:hover:not(:disabled) {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .stepper__button:disabled {
@@ -999,7 +1017,7 @@ button {
 .datetime__now:hover:not(:disabled) {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .datetime__clear {

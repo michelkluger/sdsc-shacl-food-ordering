@@ -26,7 +26,7 @@ The working method was:
 3. Every layer was run and verified as it was written: the validation core against a scratch
    harness, the API over ASGI, the integration tests against a live Meilisearch container, and
    the whole stack through Docker Compose.
-4. Lint (`ruff`), type checking (`ty`), 378 backend tests and 69 frontend tests all pass.
+4. Lint (`ruff`), type checking (`ty`), 378 backend tests and 72 frontend tests all pass.
 
 **Practically all source code in this repository was AI-generated.** The human contribution was
 direction, scope decisions, and review.
