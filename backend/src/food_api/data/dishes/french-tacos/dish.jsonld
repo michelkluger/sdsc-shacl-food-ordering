@@ -1,0 +1,15 @@
+{
+  "@context": "https://sdsc.example/ns/food/context/base.jsonld",
+  "id": "food:french-tacos",
+  "type": "food:Dish",
+  "slug": "french-tacos",
+  "name": "French Tacos",
+  "description": "The Lyonnais street-food classic: a folded, grilled wheat tortilla stuffed with meat, fries and a molten cheese sauce. Nothing whatsoever to do with a Mexican taco.",
+  "cuisine": "French",
+  "basePrice": 12.5,
+  "currency": "CHF",
+  "image": "/static/img/french-tacos.svg",
+  "tag": ["street food", "grilled", "comfort food", "cheese sauce", "fries"],
+  "diet": ["halal-available", "vegetarian-available"],
+  "allergen": ["gluten", "milk"]
+}

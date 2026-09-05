@@ -1,0 +1,30 @@
+# Task statement — internal document, deliberately not published.
+Tasks_RSDE_2026.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+*.egg-info/
+
+# Node / bun
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Local env & data
+.env
+.env.local
+meili_data/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

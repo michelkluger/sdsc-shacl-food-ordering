@@ -1,0 +1,128 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Order shape for a French Tacos.
+#
+# `sh:targetClass food:Order` is safe because validation is per-request and per-dish: the API
+# builds a graph holding exactly one order and pairs it with exactly one dish shape, so there is
+# never a second food:Order node for this shape to reach (see shacl/validate.py).
+#
+
+food:FrenchTacosOrderShape a sh:NodeShape ;
+    rdfs:label "French Tacos order"@en ;
+    sh:targetClass food:Order ;
+    sh:closed true ;
+    sh:ignoredProperties ( <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> food:dish ) ;
+
+    # ---- reused, dish-independent fields --------------------------------
+    sh:property food:QuantityProperty ,
+                food:CustomerNameProperty ,
+                food:PickupTimeProperty ,
+                food:CustomerNoteProperty ;
+
+    # ---- size -----------------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:size ;
+        sh:name "size" ;
+        rdfs:label "Size" ;
+        sh:description "Tortilla size. Bigger tortillas hold more filling." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( food:M food:L food:XL ) ;
+        sh:defaultValue food:M ;
+        sh:group food:CoreGroup ;
+        sh:order 1 ;
+        sh:message "Pick one size: M, L or XL." ;
+    ] ;
+
+    # ---- meats: 1..2, the cardinality the cross-field rule keys on -------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:meat ;
+        sh:name "meats" ;
+        rdfs:label "Meat" ;
+        sh:description "Choose one or two. A second meat needs an XL tortilla." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 2 ;
+        sh:in ( food:kebab food:cordonBleu food:nuggets food:merguez food:falafel ) ;
+        sh:group food:CoreGroup ;
+        sh:order 2 ;
+        sh:message "Choose at least one meat, and no more than two." ;
+    ] ;
+
+    # ---- sauces: 0..3 ---------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:sauce ;
+        sh:name "sauces" ;
+        rdfs:label "Sauces" ;
+        sh:description "Up to three sauces. They are mixed into the filling, not served on the side." ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 3 ;
+        sh:in ( food:algerienne food:samurai food:bbq food:ketchup food:mayo food:harissa ) ;
+        sh:group food:CoreGroup ;
+        sh:order 3 ;
+        sh:message "Pick at most three sauces." ;
+    ] ;
+
+    # ---- extras ---------------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:extraCheese ;
+        sh:name "extraCheese" ;
+        rdfs:label "Extra cheese sauce" ;
+        sh:description "A second ladle of cheese sauce." ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+        sh:defaultValue false ;
+        sh:group food:ExtrasGroup ;
+        sh:order 4 ;
+    ] ;
+
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:supplement ;
+        sh:name "supplement" ;
+        rdfs:label "Side" ;
+        sh:description "Something on the side." ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+        sh:in ( food:fries food:onionRings ) ;
+        sh:group food:ExtrasGroup ;
+        sh:order 5 ;
+    ] ;
+
+    # ---- cross-field rule -----------------------------------------------
+    #
+    # Two meats only fit in an XL tortilla. This is the kind of constraint that cannot be
+    # expressed in JSON Schema draft-07 as JSON Forms consumes it, which is precisely why the
+    # backend, not the form schema, is the authority on validity.
+    #
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        rdfs:label "Two meats require XL"@en ;
+        sh:message "Two meats only fit in an XL tortilla - pick XL, or drop one meat." ;
+        sh:prefixes food:prefixes ;
+        sh:select """
+            SELECT $this ?path ?value
+            WHERE {
+                # ?path gives the result a sh:resultPath, so the message lands on the size
+                # control rather than on the form as a whole.
+                BIND (food:size AS ?path)
+                $this food:size ?value .
+                FILTER (?value != food:XL)
+                {
+                    SELECT $this (COUNT(DISTINCT ?meat) AS ?meatCount)
+                    WHERE { $this food:meat ?meat . }
+                    GROUP BY $this
+                }
+                FILTER (?meatCount > 1)
+            }
+        """ ;
+    ] .

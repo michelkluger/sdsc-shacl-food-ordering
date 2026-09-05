@@ -1,0 +1,227 @@
+@prefix food:   <https://sdsc.example/ns/food#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Vocabulary for the food-ordering demo.
+#
+# This file is the *shared* half of the model: terms, human-readable labels, surcharges and
+# dietary annotations that are not specific to any one dish. Per-dish files declare which of
+# these terms they accept (via sh:in) and how many (via sh:minCount / sh:maxCount).
+#
+# Labels live here rather than in the SHACL shapes on purpose: the JSON Forms translator reads
+# rdfs:label to build `oneOf: [{const, title}]` entries, so a term is labelled once and every
+# dish that offers it inherits the label. Adding a language-tagged label is therefore the whole
+# of i18n for option values (see DESIGN.md, "Limitations").
+#
+
+<https://sdsc.example/ns/food> a owl:Ontology ;
+    rdfs:label "SDSC food ordering vocabulary"@en ;
+    rdfs:comment "Terms for configuring and ordering dishes. Demo data; not a real menu."@en .
+
+# ---------------------------------------------------------------------------
+# Classes
+# ---------------------------------------------------------------------------
+
+food:Dish a rdfs:Class ;
+    rdfs:subClassOf schema:MenuItem ;
+    rdfs:label "Dish"@en .
+
+food:Order a rdfs:Class ;
+    rdfs:subClassOf schema:Order ;
+    rdfs:label "Order"@en ;
+    rdfs:comment "A filled-in order form for exactly one dish."@en .
+
+food:Option a rdfs:Class ;
+    rdfs:label "Option"@en ;
+    rdfs:comment "A selectable value for a dish property (a broth, a sauce, a size...)."@en .
+
+# ---------------------------------------------------------------------------
+# Annotation properties used by the vocabulary itself
+# ---------------------------------------------------------------------------
+
+food:surcharge a rdf:Property ;
+    rdfs:label "Surcharge"@en ;
+    rdfs:comment "Extra cost in CHF added to the dish base price when this option is chosen."@en ;
+    rdfs:range xsd:decimal .
+
+food:excludedByDiet a rdf:Property ;
+    rdfs:label "Excluded by diet"@en ;
+    rdfs:comment "Diet tokens that this option is incompatible with."@en .
+
+food:containsAllergen a rdf:Property ;
+    rdfs:label "Contains allergen"@en ;
+    rdfs:range xsd:string .
+
+# ---------------------------------------------------------------------------
+# Order properties (shared across dishes)
+# ---------------------------------------------------------------------------
+
+food:dish a rdf:Property ;
+    rdfs:label "Dish"@en ;
+    rdfs:comment "The dish being ordered. Set by the server from the URL, never by the client."@en .
+
+food:quantity a rdf:Property ;
+    rdfs:label "Quantity"@en ;
+    rdfs:range xsd:integer .
+
+food:customerName a rdf:Property ;
+    rdfs:label "Your name"@en ;
+    rdfs:range xsd:string .
+
+food:customerNote a rdf:Property ;
+    rdfs:label "Notes for the kitchen"@en ;
+    rdfs:range xsd:string .
+
+food:pickupTime a rdf:Property ;
+    rdfs:label "Pickup time"@en ;
+    rdfs:range xsd:dateTime .
+
+# ---------------------------------------------------------------------------
+# Dish-specific properties
+# ---------------------------------------------------------------------------
+
+food:size          a rdf:Property ; rdfs:label "Size"@en .
+food:meat          a rdf:Property ; rdfs:label "Meat"@en .
+food:sauce         a rdf:Property ; rdfs:label "Sauce"@en .
+food:supplement    a rdf:Property ; rdfs:label "Supplement"@en .
+food:extraCheese   a rdf:Property ; rdfs:label "Extra cheese"@en ; rdfs:range xsd:boolean .
+
+food:broth         a rdf:Property ; rdfs:label "Broth"@en .
+food:noodleFirmness a rdf:Property ; rdfs:label "Noodle firmness"@en .
+food:spiceLevel    a rdf:Property ; rdfs:label "Spice level"@en ; rdfs:range xsd:integer .
+food:topping       a rdf:Property ; rdfs:label "Toppings"@en .
+food:extraNoodles  a rdf:Property ; rdfs:label "Extra noodles"@en ; rdfs:range xsd:boolean .
+
+food:base          a rdf:Property ; rdfs:label "Base"@en .
+food:protein       a rdf:Property ; rdfs:label "Protein"@en .
+food:dressing      a rdf:Property ; rdfs:label "Dressing"@en .
+food:crunch        a rdf:Property ; rdfs:label "Crunch"@en .
+
+# ---------------------------------------------------------------------------
+# Property groups — drive the JSON Forms UI schema layout (sh:group)
+# ---------------------------------------------------------------------------
+
+food:CoreGroup a sh:PropertyGroup ;
+    rdfs:label "Your dish"@en ;
+    sh:order 1 .
+
+food:ExtrasGroup a sh:PropertyGroup ;
+    rdfs:label "Extras"@en ;
+    sh:order 2 .
+
+food:PickupGroup a sh:PropertyGroup ;
+    rdfs:label "Pickup details"@en ;
+    sh:order 3 .
+
+# ---------------------------------------------------------------------------
+# Option terms
+#
+# Each term carries a label (used as the form control's option title) and, where relevant,
+# a surcharge, allergens, and the diets it rules out. The cross-field SHACL rules query these
+# annotations rather than hard-coding term lists, so a new topping is described once here.
+# ---------------------------------------------------------------------------
+
+# -- sizes ------------------------------------------------------------------
+food:M  a food:Option ; rdfs:label "M (30 cm)"@en  ; food:surcharge 0.0 .
+food:L  a food:Option ; rdfs:label "L (40 cm)"@en  ; food:surcharge 2.5 .
+food:XL a food:Option ; rdfs:label "XL (50 cm)"@en ; food:surcharge 4.5 .
+
+# -- meats ------------------------------------------------------------------
+food:kebab       a food:Option ; rdfs:label "Kebab"@en        ; food:surcharge 0.0 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+food:cordonBleu  a food:Option ; rdfs:label "Cordon bleu"@en  ; food:surcharge 1.5 ;
+    food:containsAllergen "gluten", "milk" ; food:excludedByDiet "vegan", "vegetarian" .
+food:nuggets     a food:Option ; rdfs:label "Chicken nuggets"@en ; food:surcharge 1.0 ;
+    food:containsAllergen "gluten" ; food:excludedByDiet "vegan", "vegetarian" .
+food:merguez     a food:Option ; rdfs:label "Merguez"@en      ; food:surcharge 1.5 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+food:falafel     a food:Option ; rdfs:label "Falafel"@en      ; food:surcharge 0.0 ;
+    food:containsAllergen "sesame" .
+
+# -- sauces -----------------------------------------------------------------
+food:algerienne a food:Option ; rdfs:label "Algérienne"@en ; food:surcharge 0.0 .
+food:samurai    a food:Option ; rdfs:label "Samouraï (hot)"@en ; food:surcharge 0.0 .
+food:bbq        a food:Option ; rdfs:label "Barbecue"@en ; food:surcharge 0.0 .
+food:ketchup    a food:Option ; rdfs:label "Ketchup"@en ; food:surcharge 0.0 .
+food:mayo       a food:Option ; rdfs:label "Mayonnaise"@en ; food:surcharge 0.0 ;
+    food:containsAllergen "egg" ; food:excludedByDiet "vegan" .
+food:harissa    a food:Option ; rdfs:label "Harissa"@en ; food:surcharge 0.0 .
+
+# -- supplements ------------------------------------------------------------
+food:fries      a food:Option ; rdfs:label "Extra fries"@en ; food:surcharge 2.0 .
+food:onionRings a food:Option ; rdfs:label "Onion rings"@en ; food:surcharge 2.5 ;
+    food:containsAllergen "gluten" .
+
+# -- broths -----------------------------------------------------------------
+food:tonkotsu  a food:Option ; rdfs:label "Tonkotsu (pork)"@en ; food:surcharge 2.0 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+food:shoyu     a food:Option ; rdfs:label "Shoyu (soy)"@en ; food:surcharge 0.0 ;
+    food:containsAllergen "soy" ; food:excludedByDiet "vegan", "vegetarian" .
+food:miso      a food:Option ; rdfs:label "Miso"@en ; food:surcharge 1.0 ;
+    food:containsAllergen "soy" ; food:excludedByDiet "vegan", "vegetarian" .
+food:shio      a food:Option ; rdfs:label "Shio (salt)"@en ; food:surcharge 0.0 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+food:veganMiso a food:Option ; rdfs:label "Vegan miso"@en ; food:surcharge 1.0 ;
+    food:containsAllergen "soy" .
+
+# -- noodle firmness --------------------------------------------------------
+food:soft       a food:Option ; rdfs:label "Soft"@en .
+food:medium     a food:Option ; rdfs:label "Medium"@en .
+food:firm       a food:Option ; rdfs:label "Firm"@en .
+food:extraFirm  a food:Option ; rdfs:label "Extra firm (barikata)"@en .
+
+# -- ramen toppings ---------------------------------------------------------
+food:chashu   a food:Option ; rdfs:label "Chashu pork"@en ; food:surcharge 3.0 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+food:ajitama  a food:Option ; rdfs:label "Ajitama (marinated egg)"@en ; food:surcharge 2.0 ;
+    food:containsAllergen "egg" ; food:excludedByDiet "vegan" .
+food:nori     a food:Option ; rdfs:label "Nori"@en ; food:surcharge 1.0 .
+food:menma    a food:Option ; rdfs:label "Menma (bamboo)"@en ; food:surcharge 1.0 .
+food:corn     a food:Option ; rdfs:label "Sweetcorn"@en ; food:surcharge 1.0 .
+food:negi     a food:Option ; rdfs:label "Spring onion"@en ; food:surcharge 0.5 .
+food:butter   a food:Option ; rdfs:label "Hokkaido butter"@en ; food:surcharge 1.5 ;
+    food:containsAllergen "milk" ; food:excludedByDiet "vegan" .
+
+# -- poke bases -------------------------------------------------------------
+food:sushiRice   a food:Option ; rdfs:label "Sushi rice"@en ; food:surcharge 0.0 .
+food:brownRice   a food:Option ; rdfs:label "Brown rice"@en ; food:surcharge 0.0 .
+food:mixedGreens a food:Option ; rdfs:label "Mixed greens"@en ; food:surcharge 0.0 .
+food:soba        a food:Option ; rdfs:label "Soba noodles"@en ; food:surcharge 1.5 ;
+    food:containsAllergen "gluten" .
+
+# -- poke proteins ----------------------------------------------------------
+food:salmon    a food:Option ; rdfs:label "Salmon"@en ; food:surcharge 4.0 ;
+    food:containsAllergen "fish" ; food:excludedByDiet "vegan", "vegetarian" .
+food:tuna      a food:Option ; rdfs:label "Tuna"@en ; food:surcharge 4.5 ;
+    food:containsAllergen "fish" ; food:excludedByDiet "vegan", "vegetarian" .
+food:tofu      a food:Option ; rdfs:label "Marinated tofu"@en ; food:surcharge 2.0 ;
+    food:containsAllergen "soy" .
+food:edamame   a food:Option ; rdfs:label "Edamame"@en ; food:surcharge 1.5 ;
+    food:containsAllergen "soy" .
+food:chicken   a food:Option ; rdfs:label "Grilled chicken"@en ; food:surcharge 3.5 ;
+    food:excludedByDiet "vegan", "vegetarian" .
+
+# -- poke dressings ---------------------------------------------------------
+food:ponzu       a food:Option ; rdfs:label "Ponzu"@en ; food:surcharge 0.0 ;
+    food:containsAllergen "soy" .
+food:spicyMayo   a food:Option ; rdfs:label "Spicy mayo"@en ; food:surcharge 0.5 ;
+    food:containsAllergen "egg" ; food:excludedByDiet "vegan" .
+food:sesameOil   a food:Option ; rdfs:label "Sesame oil"@en ; food:surcharge 0.0 ;
+    food:containsAllergen "sesame" .
+food:wasabiCream a food:Option ; rdfs:label "Wasabi cream"@en ; food:surcharge 0.5 ;
+    food:containsAllergen "milk" ; food:excludedByDiet "vegan" .
+
+# -- poke crunch ------------------------------------------------------------
+food:crispyOnion a food:Option ; rdfs:label "Crispy onions"@en ; food:surcharge 0.5 ;
+    food:containsAllergen "gluten" .
+food:cashew      a food:Option ; rdfs:label "Cashews"@en ; food:surcharge 1.0 ;
+    food:containsAllergen "nuts" .
+food:sesameSeeds a food:Option ; rdfs:label "Sesame seeds"@en ; food:surcharge 0.0 ;
+    food:containsAllergen "sesame" .
+food:furikake    a food:Option ; rdfs:label "Furikake"@en ; food:surcharge 0.5 ;
+    food:containsAllergen "fish" .

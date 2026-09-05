@@ -1,0 +1,125 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Order shape for a bowl of ramen.
+#
+
+food:RamenOrderShape a sh:NodeShape ;
+    rdfs:label "Ramen order"@en ;
+    sh:targetClass food:Order ;
+    sh:closed true ;
+    sh:ignoredProperties ( <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> food:dish ) ;
+
+    sh:property food:QuantityProperty ,
+                food:CustomerNameProperty ,
+                food:PickupTimeProperty ,
+                food:CustomerNoteProperty ;
+
+    # ---- broth ----------------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:broth ;
+        sh:name "broth" ;
+        rdfs:label "Broth" ;
+        sh:description "The base of the bowl. Tonkotsu simmers for eighteen hours." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( food:tonkotsu food:shoyu food:miso food:shio food:veganMiso ) ;
+        sh:group food:CoreGroup ;
+        sh:order 1 ;
+        sh:message "Choose exactly one broth." ;
+    ] ;
+
+    # ---- noodle firmness ------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:noodleFirmness ;
+        sh:name "noodleFirmness" ;
+        rdfs:label "Noodle firmness" ;
+        sh:description "How long the noodles stay in the water." ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( food:soft food:medium food:firm food:extraFirm ) ;
+        sh:defaultValue food:medium ;
+        sh:group food:CoreGroup ;
+        sh:order 2 ;
+        sh:message "Choose exactly one noodle firmness." ;
+    ] ;
+
+    # ---- spice level: numeric range -------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:spiceLevel ;
+        sh:name "spiceLevel" ;
+        rdfs:label "Spice level" ;
+        sh:description "0 is mild, 5 will be remembered." ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 5 ;
+        sh:defaultValue 1 ;
+        sh:group food:CoreGroup ;
+        sh:order 3 ;
+        sh:message "Spice level runs from 0 to 5." ;
+    ] ;
+
+    # ---- toppings: 0..5 -------------------------------------------------
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:topping ;
+        sh:name "toppings" ;
+        rdfs:label "Toppings" ;
+        sh:description "Up to five. Chashu and ajitama are not available on a vegan broth." ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 5 ;
+        sh:in ( food:chashu food:ajitama food:nori food:menma food:corn food:negi food:butter ) ;
+        sh:group food:ExtrasGroup ;
+        sh:order 4 ;
+        sh:message "Pick at most five toppings." ;
+    ] ;
+
+    sh:property [
+        a sh:PropertyShape ;
+        sh:path food:extraNoodles ;
+        sh:name "extraNoodles" ;
+        rdfs:label "Extra noodles (kaedama)" ;
+        sh:description "A second portion of noodles (kaedama), served when you ask for it." ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+        sh:defaultValue false ;
+        sh:group food:ExtrasGroup ;
+        sh:order 5 ;
+    ] ;
+
+    # ---- cross-field rule -----------------------------------------------
+    #
+    # A vegan broth rules out any topping annotated as excluded by a vegan diet. The rule reads
+    # `food:excludedByDiet` from the vocabulary rather than listing toppings, so annotating a new
+    # topping in food.ttl is enough to bring it under this constraint. The offending value is
+    # bound to ?value so the report can point the error at the exact array element.
+    #
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        rdfs:label "Vegan broth excludes animal toppings"@en ;
+        sh:message "{$optionLabel} is not available with a vegan broth." ;
+        sh:prefixes food:prefixes ;
+        sh:select """
+            SELECT $this ?path ?value ?optionLabel
+            WHERE {
+                # Binding ?path is what gives the violation a sh:resultPath, and therefore a
+                # JSON pointer the form can attach the message to. Without it a SPARQL result
+                # is reported against the whole order and the user has to guess which field.
+                BIND (food:topping AS ?path)
+                $this food:broth food:veganMiso .
+                $this food:topping ?value .
+                ?value food:excludedByDiet "vegan" .
+                OPTIONAL { ?value rdfs:label ?optionLabel . }
+            }
+        """ ;
+    ] .

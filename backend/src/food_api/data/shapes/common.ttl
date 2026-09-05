@@ -1,0 +1,84 @@
+@prefix food: <https://sdsc.example/ns/food#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#
+# Property shapes shared by every dish.
+#
+# Dish shapes reference these by IRI (`sh:property food:QuantityProperty`) instead of copying
+# them. The translator walks `sh:property` and neither knows nor cares whether a property shape
+# was declared inline or reused, so this stays a pure modelling decision.
+#
+# `sh:name` is load-bearing: it is the JSON key in the generated JSON Schema, the JSON-LD
+# context term, and the field referenced by the JSON pointer in a validation error. Changing a
+# `sh:name` changes the wire contract for that dish.
+#
+
+food:QuantityProperty a sh:PropertyShape ;
+    sh:path food:quantity ;
+    sh:name "quantity" ;
+    rdfs:label "Quantity" ;
+    sh:description "How many of this dish to prepare." ;
+    sh:datatype xsd:integer ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:minInclusive 1 ;
+    sh:maxInclusive 10 ;
+    sh:defaultValue 1 ;
+    sh:group food:PickupGroup ;
+    sh:order 10 ;
+    sh:message "Quantity must be a whole number between 1 and 10." .
+
+food:CustomerNameProperty a sh:PropertyShape ;
+    sh:path food:customerName ;
+    sh:name "customerName" ;
+    rdfs:label "Your name" ;
+    sh:description "The name we call out when the order is ready." ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:minLength 2 ;
+    sh:maxLength 60 ;
+    # No leading/trailing whitespace and no line breaks. Deliberately not a "letters only"
+    # class: SHACL specifies XPath regexes, but pySHACL compiles sh:pattern with Python's `re`,
+    # which has no \p{L} Unicode property escapes. A hand-rolled Latin range would quietly
+    # reject perfectly ordinary names, so the shape constrains shape, not alphabet.
+    sh:pattern "^\\S(.*\\S)?$" ;
+    sh:group food:PickupGroup ;
+    sh:order 11 ;
+    sh:message "Please give a name of 2-60 characters, without leading or trailing spaces." .
+
+food:PickupTimeProperty a sh:PropertyShape ;
+    sh:path food:pickupTime ;
+    sh:name "pickupTime" ;
+    rdfs:label "Pickup time" ;
+    sh:description "When you will collect the order. Leave empty for as soon as possible." ;
+    sh:datatype xsd:dateTime ;
+    sh:maxCount 1 ;
+    sh:group food:PickupGroup ;
+    sh:order 12 ;
+    sh:message "Pickup time must be a date and time, for example 2026-09-05T18:30:00+02:00." .
+
+food:CustomerNoteProperty a sh:PropertyShape ;
+    sh:path food:customerNote ;
+    sh:name "customerNote" ;
+    rdfs:label "Notes for the kitchen" ;
+    sh:description "Anything the kitchen should know. Allergies, spice, packaging." ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:maxLength 280 ;
+    sh:group food:PickupGroup ;
+    sh:order 13 ;
+    sh:message "Notes are limited to 280 characters." .
+
+#
+# Prefix declarations for every `sh:sparql` constraint in this project.
+#
+# SPARQL constraints do not inherit the Turtle document's @prefix directives, so SHACL requires
+# them to be declared as data. Dish shapes point at this node with `sh:prefixes food:prefixes`.
+#
+food:prefixes
+    sh:declare [ sh:prefix "food" ; sh:namespace "https://sdsc.example/ns/food#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] ,
+               [ sh:prefix "xsd"  ; sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ] .

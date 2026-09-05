@@ -1,0 +1,11 @@
+**/.git
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/dist
+**/htmlcov
+**/.coverage
+Tasks_RSDE_2026.pdf
+meili_data/

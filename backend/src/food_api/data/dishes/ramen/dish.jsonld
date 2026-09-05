@@ -1,0 +1,15 @@
+{
+  "@context": "https://sdsc.example/ns/food/context/base.jsonld",
+  "id": "food:ramen",
+  "type": "food:Dish",
+  "slug": "ramen",
+  "name": "Ramen",
+  "description": "Wheat noodles in a long-simmered broth, finished to order with toppings. Choose your broth, how firm you want the noodles, and how much heat you can take.",
+  "cuisine": "Japanese",
+  "basePrice": 16.0,
+  "currency": "CHF",
+  "image": "/static/img/ramen.svg",
+  "tag": ["noodles", "broth", "spicy", "umami", "vegan-available"],
+  "diet": ["vegan-available", "vegetarian-available"],
+  "allergen": ["gluten", "soy"]
+}
