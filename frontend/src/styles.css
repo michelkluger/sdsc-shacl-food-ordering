@@ -1,0 +1,310 @@
+/*
+ * Deliberately small. The task asks for a minimal frontend whose only job is to display what
+ * the backend provides, so this styles the shell and lets the JSON Forms vanilla renderers
+ * style the controls. No selector below targets a particular dish or field.
+ */
+
+:root {
+  --bg: #fbfaf8;
+  --surface: #ffffff;
+  --ink: #1c1a17;
+  --ink-soft: #5d574e;
+  --line: #e3ded6;
+  --accent: #b4451f;
+  --accent-soft: #fdf1ec;
+  --danger: #a4231c;
+  --danger-soft: #fdf0ef;
+  --ok: #2c6e49;
+  --radius: 10px;
+  --font: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16150f;
+    --surface: #201e18;
+    --ink: #f2ede3;
+    --ink-soft: #b3aa9a;
+    --line: #38342b;
+    --accent: #e8834f;
+    --accent-soft: #2b2019;
+    --danger: #f08a80;
+    --danger-soft: #2e1c1a;
+    --ok: #7fc09b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  line-height: 1.55;
+}
+
+.app {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 5rem;
+}
+
+.app__header h1 {
+  font-family: var(--font);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.app__header p {
+  color: var(--ink-soft);
+  margin: 0 0 2rem;
+  max-width: 34rem;
+}
+
+/* ---- dish picker ---- */
+
+.dishes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.dish {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.dish:hover {
+  border-color: var(--accent);
+}
+
+.dish--selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dish__name {
+  font-family: var(--font);
+  font-size: 1.15rem;
+}
+
+.dish__cuisine,
+.dish__price {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+/* ---- form ---- */
+
+.dish-form {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.dish-form__header h2 {
+  font-family: var(--font);
+  margin: 0 0 0.35rem;
+}
+
+.dish-form__header p {
+  margin: 0 0 0.35rem;
+  color: var(--ink-soft);
+}
+
+.dish-form__meta {
+  font-size: 0.9rem;
+}
+
+.dish-form__provenance {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.submit {
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* ---- notices ---- */
+
+.notice {
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  margin-bottom: 1.25rem;
+}
+
+.notice--error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.notice ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.notice p {
+  margin: 0.35rem 0 0;
+}
+
+.receipt {
+  background: var(--surface);
+  border: 1px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+}
+
+.receipt h2 {
+  font-family: var(--font);
+  color: var(--ok);
+  margin: 0 0 0.5rem;
+}
+
+.receipt__total {
+  font-size: 2rem;
+  font-family: var(--font);
+  margin: 0.5rem 0;
+}
+
+.receipt__id {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  word-break: break-all;
+}
+
+.receipt button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.25rem;
+  font: inherit;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+/* ---- JSON Forms vanilla renderers ---- */
+
+.vertical-layout,
+.group-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+fieldset,
+.group-layout {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem 1.25rem;
+  margin: 1.25rem 0 0;
+}
+
+legend,
+.group-layout > h3,
+.group-layout > label {
+  font-family: var(--font);
+  font-size: 1.05rem;
+  padding: 0 0.35rem;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.control > label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='datetime-local'],
+input[type='date'],
+select,
+textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.input-description {
+  font-size: 0.83rem;
+  color: var(--ink-soft);
+}
+
+.validation,
+.validation_error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.error input,
+.error select,
+.error textarea {
+  border-color: var(--danger);
+}
+
+.array-layout,
+.array-table-layout {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
