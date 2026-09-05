@@ -120,6 +120,13 @@ For an array the pointer addresses the **offending element**, recovered by match
 against the submitted payload. On the client the mapping to JSON Forms is then the identity
 function: Ajv addresses errors by `instancePath`, which is also a JSON pointer.
 
+### An empty field is absent, not empty
+
+Worth stating because it bites: `sh:datatype xsd:dateTime` rejects `""`, so a cleared optional
+field must send *no key at all* rather than an empty string. The renderers set `undefined`
+rather than `''`, and `POST /api/orders/ramen` with `"pickupTime": ""` returns a 422 that says
+so — which is the behaviour the control is built around, not one it works around.
+
 ---
 
 ## 3. Languages
@@ -290,10 +297,23 @@ is the authority on everything.
 own optimistic message, and the vanilla renderers concatenate them. Distinguishable
 programmatically (`keyword: 'shacl'`), not visually.
 
-**The custom renderers are heuristics, and heuristics have edges.** Three of them
+**The summary duplicates the price, on purpose.** It shows the total beside the form *and* a
+compact problem count, while the form itself carries the full violation notice. Two places
+saying the same thing is usually a smell; here the summary is sticky and the notice is not, so
+the alternative is a total that scrolls out of view while someone is still customising. The two
+strings are deliberately different (`{n} to fix` vs the full sentence) so they read as one
+system rather than as an echo.
+
+**The price shown while customising is an estimate.** It is computed in the browser from the
+`pricing` block, and the server recomputes it authoritatively on submit. They agree today
+because both read the same `food:surcharge` annotations, but the receipt is the number that
+counts and the UI says so.
+
+**The custom renderers are heuristics, and heuristics have edges.** Five of them
 (`frontend/src/renderers/`) match on the *shape* of a schema, never on a field name: an array
 of enumerated values becomes chips, a short enumeration becomes cards, a bounded integer becomes
-a stepper or a slider. The slider/stepper split turns on whether the minimum is zero — a scale
+a stepper or a slider, and a `format: date-time` string becomes a date picker with a **Now**
+button so nobody has to type an ISO timestamp. The slider/stepper split turns on whether the minimum is zero — a scale
 starts at zero, a count starts at one — which is a real signal but not a guaranteed one. A shape
 that violated it would get the wrong-but-usable control. Making that explicit would mean a
 `food:` annotation for control intent, which starts down the road of putting presentation in the

@@ -44,8 +44,17 @@
     sans-serif;
 }
 
+/*
+ * Dark tokens, declared once and applied in two situations:
+ *
+ *   - the system asks for dark AND the user has not explicitly chosen light;
+ *   - the user has explicitly chosen dark, whatever the system says.
+ *
+ * The `:not([data-theme='light'])` guard is what makes an explicit light choice win over a dark
+ * system preference; without it the media query would silently override the toggle.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --page: #14131c;
     --surface: #1c1b26;
     --surface-sunken: #232231;
@@ -65,6 +74,25 @@
   }
 }
 
+:root[data-theme='dark'] {
+  --page: #14131c;
+  --surface: #1c1b26;
+  --surface-sunken: #232231;
+  --ink: #eceaf5;
+  --ink-soft: #b6b2ca;
+  --ink-faint: #8b87a0;
+  --line: #302e40;
+  --line-strong: #3d3a52;
+  --accent: #8a94d8;
+  --accent-dark: #a8b0e8;
+  --accent-wash: #24243a;
+  --danger: #f2a49c;
+  --danger-wash: #2c1c1c;
+  --ok: #86c9a4;
+  --ok-wash: #1b2822;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px -12px rgb(0 0 0 / 60%);
+}
+
 *,
 *::before,
 *::after {
@@ -73,6 +101,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light dark;
 }
 
 body {
@@ -130,7 +159,7 @@ button {
 }
 
 .masthead__inner {
-  max-width: 68rem;
+  max-width: 78rem;
   margin: 0 auto;
   padding: 0.85rem 1.25rem;
   display: flex;
@@ -175,7 +204,7 @@ button {
 .main {
   flex: 1;
   width: 100%;
-  max-width: 68rem;
+  max-width: 78rem;
   margin: 0 auto;
   padding: 2.5rem 1.25rem 4rem;
 }
@@ -239,12 +268,47 @@ button {
   color: #fff;
 }
 
+.themes {
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+}
+
+.theme {
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+  border-radius: var(--radius-pill);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.theme:hover {
+  color: var(--ink);
+}
+
+.theme--on {
+  background: var(--accent);
+  color: #fff;
+}
+
+.masthead__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* --------------------------------------------------------------- layout */
 
 .layout {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
   align-items: start;
 }
 
@@ -375,6 +439,181 @@ button {
 
 /* ------------------------------------------------------------ dish form */
 
+/*
+ * The form and its running summary. Two columns on a wide screen with the summary sticky, so
+ * the price stays visible the whole time someone is customising rather than only once they
+ * reach the bottom; a pinned bar at the foot of the viewport on a narrow one, for the same
+ * reason.
+ */
+.dish-form {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
+  align-items: start;
+}
+
+@media (max-width: 64rem) {
+  .dish-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.summary__card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+@media (min-width: 64.01rem) {
+  .summary {
+    position: sticky;
+    top: 5rem;
+  }
+}
+
+@media (max-width: 64rem) {
+  .summary {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -1.25rem -4rem;
+  }
+
+  .summary__card {
+    border-radius: 0;
+    border-inline: none;
+    border-bottom: none;
+    box-shadow: 0 -6px 24px -12px rgb(38 35 92 / 30%);
+  }
+
+  /* On a pinned bar the breakdown would eat the viewport; the total is what must stay visible. */
+  .summary__title,
+  .summary__lines,
+  .summary__caveat {
+    display: none;
+  }
+
+  .summary__total {
+    border-top: none;
+    padding-top: 0;
+    margin-bottom: 0.6rem;
+  }
+}
+
+.summary__title {
+  font-family: var(--display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-faint);
+  margin: 0 0 0.75rem;
+}
+
+.summary__lines {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.summary__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.summary__line dt,
+.summary__line dd {
+  margin: 0;
+}
+
+.summary__line dd {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__line:first-child {
+  font-weight: 600;
+}
+
+.summary__line--option dt {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary__field {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.summary__option {
+  color: var(--ink-soft);
+}
+
+.summary__included {
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+}
+
+.summary__line--multiplier {
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+  color: var(--ink-soft);
+}
+
+.summary__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.summary__total-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.summary__total-value {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__submit {
+  width: 100%;
+  margin-top: 0.9rem;
+}
+
+.summary__problems {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger);
+  text-align: center;
+}
+
+.summary__caveat {
+  margin: 0.75rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
 .dish-form__header {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--line);
@@ -397,35 +636,6 @@ button {
   font-size: 0.78rem;
   color: var(--ink-faint);
   text-transform: lowercase;
-}
-
-.dish-form__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
-}
-
-.dish-form__total {
-  display: flex;
-  flex-direction: column;
-}
-
-.dish-form__total-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-faint);
-}
-
-.dish-form__total-value {
-  font-family: var(--display);
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .provenance {
@@ -758,6 +968,48 @@ button {
   color: var(--ink-faint);
   width: 1ch;
   text-align: center;
+}
+
+/* ------------------------------------------------------ date and time */
+
+.datetime {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.datetime input[type='datetime-local'] {
+  flex: 0 1 15rem;
+  max-width: 15rem;
+}
+
+.datetime__now,
+.datetime__clear {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.datetime__now:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.datetime__clear {
+  border-color: transparent;
+  background: none;
+  font-weight: 400;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding-inline: 0.35rem;
 }
 
 /* --------------------- JSON Forms vanilla renderers (the fall-through) */

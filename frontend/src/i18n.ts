@@ -50,6 +50,7 @@ interface Strings {
   reference: string
   problemsOne: string
   problemsMany: string
+  problemsShort: string
   from: string
   contains: string
   estimatedTotal: string
@@ -59,9 +60,17 @@ interface Strings {
   optional: string
   selectAll: string
   clear: string
+  now: string
+  yourOrder: string
+  included: string
+  priceEstimate: string
   chosenOf: string
   noneChosen: string
   languageLabel: string
+  themeLabel: string
+  themeSystem: string
+  themeLight: string
+  themeDark: string
   searchPlaceholder: string
   /** `{n}` is replaced with the count. */
   atMost: string
@@ -85,6 +94,7 @@ const en: Strings = {
   reference: 'Reference',
   problemsOne: 'One thing needs fixing',
   problemsMany: '{n} things need fixing',
+  problemsShort: '{n} to fix',
   from: 'From',
   contains: 'Contains',
   estimatedTotal: 'Estimated total',
@@ -94,9 +104,17 @@ const en: Strings = {
   optional: 'optional',
   selectAll: 'Select all',
   clear: 'Clear',
+  now: 'Now',
+  yourOrder: 'Your order',
+  included: 'included',
+  priceEstimate: 'Estimate. The kitchen confirms the final price when the order is accepted.',
   chosenOf: '{n} of {max} chosen',
   noneChosen: 'None chosen',
   languageLabel: 'Language',
+  themeLabel: 'Appearance',
+  themeSystem: 'Match system',
+  themeLight: 'Light',
+  themeDark: 'Dark',
   searchPlaceholder: 'Search dishes…',
   atMost: 'at most {n}',
   atLeast: 'at least {n}',
@@ -119,6 +137,7 @@ const de: Strings = {
   reference: 'Referenz',
   problemsOne: 'Eine Sache muss noch korrigiert werden',
   problemsMany: '{n} Dinge müssen noch korrigiert werden',
+  problemsShort: '{n} zu korrigieren',
   from: 'Ab',
   contains: 'Enthält',
   estimatedTotal: 'Geschätztes Total',
@@ -128,9 +147,17 @@ const de: Strings = {
   optional: 'optional',
   selectAll: 'Alle wählen',
   clear: 'Leeren',
+  now: 'Jetzt',
+  yourOrder: 'Deine Bestellung',
+  included: 'inbegriffen',
+  priceEstimate: 'Schätzung. Der endgültige Preis wird bei der Annahme der Bestellung bestätigt.',
   chosenOf: '{n} von {max} gewählt',
   noneChosen: 'Nichts gewählt',
   languageLabel: 'Sprache',
+  themeLabel: 'Darstellung',
+  themeSystem: 'Wie das System',
+  themeLight: 'Hell',
+  themeDark: 'Dunkel',
   searchPlaceholder: 'Gerichte suchen…',
   atMost: 'höchstens {n}',
   atLeast: 'mindestens {n}',
@@ -153,6 +180,7 @@ const fr: Strings = {
   reference: 'Référence',
   problemsOne: 'Un point à corriger',
   problemsMany: '{n} points à corriger',
+  problemsShort: '{n} à corriger',
   from: 'Dès',
   contains: 'Contient',
   estimatedTotal: 'Total estimé',
@@ -162,9 +190,17 @@ const fr: Strings = {
   optional: 'facultatif',
   selectAll: 'Tout sélectionner',
   clear: 'Effacer',
+  now: 'Maintenant',
+  yourOrder: 'Votre commande',
+  included: 'inclus',
+  priceEstimate: "Estimation. Le prix définitif est confirmé à l'acceptation de la commande.",
   chosenOf: '{n} sur {max} choisis',
   noneChosen: 'Aucun choix',
   languageLabel: 'Langue',
+  themeLabel: 'Apparence',
+  themeSystem: 'Comme le système',
+  themeLight: 'Clair',
+  themeDark: 'Sombre',
   searchPlaceholder: 'Rechercher des plats…',
   atMost: 'au maximum {n}',
   atLeast: 'au minimum {n}',
@@ -187,6 +223,7 @@ const it: Strings = {
   reference: 'Riferimento',
   problemsOne: 'Una cosa da correggere',
   problemsMany: '{n} cose da correggere',
+  problemsShort: '{n} da correggere',
   from: 'Da',
   contains: 'Contiene',
   estimatedTotal: 'Totale stimato',
@@ -196,9 +233,17 @@ const it: Strings = {
   optional: 'facoltativo',
   selectAll: 'Seleziona tutto',
   clear: 'Cancella',
+  now: 'Adesso',
+  yourOrder: 'Il tuo ordine',
+  included: 'incluso',
+  priceEstimate: "Stima. Il prezzo definitivo viene confermato all'accettazione dell'ordine.",
   chosenOf: '{n} di {max} scelti',
   noneChosen: 'Nessuna scelta',
   languageLabel: 'Lingua',
+  themeLabel: 'Aspetto',
+  themeSystem: 'Come il sistema',
+  themeLight: 'Chiaro',
+  themeDark: 'Scuro',
   searchPlaceholder: 'Cerca piatti…',
   atMost: 'al massimo {n}',
   atLeast: 'almeno {n}',
@@ -221,6 +266,7 @@ const rm: Strings = {
   reference: 'Referenza',
   problemsOne: 'Ina chaussa sto vegnir currigida',
   problemsMany: '{n} chaussas ston vegnir currigidas',
+  problemsShort: '{n} da currigir',
   from: 'Da',
   contains: 'Cuntegna',
   estimatedTotal: 'Total estimà',
@@ -230,9 +276,17 @@ const rm: Strings = {
   optional: 'facultativ',
   selectAll: 'Tscherner tut',
   clear: 'Stizzar',
+  now: 'Ussa',
+  yourOrder: 'Tes orden',
+  included: 'incluis',
+  priceEstimate: "Stimaziun. Il pretsch definitiv vegn confermà cun l'acceptaziun da l'orden.",
   chosenOf: '{n} da {max} tschernids',
   noneChosen: 'Nagut tschernì',
   languageLabel: 'Lingua',
+  themeLabel: 'Apparientscha',
+  themeSystem: 'Sco il sistem',
+  themeLight: 'Cler',
+  themeDark: 'Stgir',
   searchPlaceholder: 'Tschertgar plats…',
   atMost: 'maximalmain {n}',
   atLeast: 'almain {n}',

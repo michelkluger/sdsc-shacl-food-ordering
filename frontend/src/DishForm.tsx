@@ -14,9 +14,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { ApiError, getForm, submitOrder } from './api'
 import type { FormDefinition, OrderReceipt, Violation } from './api'
+import { OrderSummary } from './OrderSummary'
 import { renderers } from './renderers'
 import { useUi } from './ui-context'
-import { estimateTotal } from './pricing'
 import { formLevelViolations, toAdditionalErrors } from './violations'
 
 interface Props {
@@ -151,69 +151,61 @@ export function DishForm({ slug }: Props) {
 
   if (!definition) return null
 
-  const estimate = estimateTotal(definition, data)
   const problemCount = violations.length
 
   return (
-    <section className="panel dish-form" aria-label={definition.dish.name}>
-      <header className="dish-form__header">
-        <h2>{definition.dish.name}</h2>
-        <p className="dish-form__description">{definition.dish.description}</p>
-        {definition.dish.allergens.length > 0 && (
-          <p className="dish-form__allergens">
-            {t('contains')} {definition.dish.allergens.join(' · ')}
-          </p>
-        )}
-      </header>
-
-      {problemCount > 0 && (
-        <div className="notice notice--error" role="alert">
-          <strong>
-            {problemCount === 1 ? t('problemsOne') : t('problemsMany', { n: problemCount })}
-          </strong>
-          {orphanViolations.length > 0 && (
-            <ul>
-              {orphanViolations.map((violation, index) => (
-                <li key={`${violation.pointer}-${index}`}>{violation.message}</li>
-              ))}
-            </ul>
+    <section className="dish-form" aria-label={definition.dish.name}>
+      <div className="panel dish-form__main">
+        <header className="dish-form__header">
+          <h2>{definition.dish.name}</h2>
+          <p className="dish-form__description">{definition.dish.description}</p>
+          {definition.dish.allergens.length > 0 && (
+            <p className="dish-form__allergens">
+              {t('contains')} {definition.dish.allergens.join(' · ')}
+            </p>
           )}
-        </div>
-      )}
+        </header>
 
-      <JsonFormsStyleContext.Provider value={{ styles: vanillaStyles }}>
-        <JsonForms
-          schema={definition.schema}
-          uischema={definition.uischema}
-          data={data}
-          renderers={renderers}
-          cells={vanillaCells}
-          additionalErrors={additionalErrors}
-          onChange={({ data: next }) => setData(next as Record<string, unknown>)}
-        />
-      </JsonFormsStyleContext.Provider>
+        {problemCount > 0 && (
+          <div className="notice notice--error" role="alert">
+            <strong>
+              {problemCount === 1 ? t('problemsOne') : t('problemsMany', { n: problemCount })}
+            </strong>
+            {orphanViolations.length > 0 && (
+              <ul>
+                {orphanViolations.map((violation, index) => (
+                  <li key={`${violation.pointer}-${index}`}>{violation.message}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
-      <footer className="dish-form__footer">
-        <div className="dish-form__total">
-          <span className="dish-form__total-label">{t('estimatedTotal')}</span>
-          <span className="dish-form__total-value">
-            {estimate.toFixed(2)} {definition.dish.currency}
-          </span>
-        </div>
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={() => void handleSubmit()}
-          disabled={status.kind === 'submitting'}
-        >
-          {status.kind === 'submitting' ? t('checking') : t('placeOrder')}
-        </button>
-      </footer>
+        <JsonFormsStyleContext.Provider value={{ styles: vanillaStyles }}>
+          <JsonForms
+            schema={definition.schema}
+            uischema={definition.uischema}
+            data={data}
+            renderers={renderers}
+            cells={vanillaCells}
+            additionalErrors={additionalErrors}
+            onChange={({ data: next }) => setData(next as Record<string, unknown>)}
+          />
+        </JsonFormsStyleContext.Provider>
 
-      <p className="provenance">
-        {t('generatedFrom')} <code>{definition.shapeIri.split('#').pop()}</code>.{' '}
-        {t('validatedOnServer')}
-      </p>
+        <p className="provenance">
+          {t('generatedFrom')} <code>{definition.shapeIri.split('#').pop()}</code>.{' '}
+          {t('validatedOnServer')}
+        </p>
+      </div>
+
+      <OrderSummary
+        definition={definition}
+        data={data}
+        submitting={status.kind === 'submitting'}
+        problemCount={problemCount}
+        onSubmit={() => void handleSubmit()}
+      />
     </section>
   )
 }

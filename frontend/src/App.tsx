@@ -13,8 +13,11 @@ import { ApiError, listDishes } from './api'
 import type { DishSummary } from './api'
 import { DishForm } from './DishForm'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { ThemeToggle } from './ThemeToggle'
 import { initialLanguage, rememberLanguage, translator } from './i18n'
 import type { Language } from './i18n'
+import { applyTheme, initialTheme, rememberTheme } from './theme'
+import type { Theme } from './theme'
 import { UiContext } from './ui-context'
 
 type State =
@@ -24,6 +27,7 @@ type State =
 
 export function App() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
+  const [theme, setTheme] = useState<Theme>(initialTheme)
   const [state, setState] = useState<State>({ kind: 'loading' })
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -33,6 +37,10 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = language
   }, [language])
+
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
 
   useEffect(() => {
     let cancelled = false
@@ -63,6 +71,11 @@ export function App() {
     rememberLanguage(next)
   }, [])
 
+  const changeTheme = useCallback((next: Theme) => {
+    setTheme(next)
+    rememberTheme(next)
+  }, [])
+
   return (
     <UiContext.Provider value={ui}>
       <div className="shell">
@@ -73,7 +86,10 @@ export function App() {
               <span className="brand__name">Ordes</span>
               <span className="brand__sub">SHACL-driven ordering</span>
             </a>
-            <LanguageSwitcher current={language} onChange={changeLanguage} />
+            <div className="masthead__controls">
+              <ThemeToggle current={theme} onChange={changeTheme} />
+              <LanguageSwitcher current={language} onChange={changeLanguage} />
+            </div>
           </div>
         </header>
 

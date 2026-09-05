@@ -271,7 +271,8 @@ describe('bounded integers', () => {
 describe('the running total', () => {
   it('starts at the base price', async () => {
     renderForm()
-    expect(await screen.findByText('10.00 CHF')).toBeInTheDocument()
+    // The total is an <output>, i.e. the result of a calculation, so it has a `status` role.
+    expect(await screen.findByRole('status')).toHaveTextContent('10.00 CHF')
   })
 
   it('adds the surcharge of a chosen option', async () => {
@@ -279,7 +280,7 @@ describe('the running total', () => {
     renderForm()
 
     await user.click(await screen.findByRole('radio', { name: 'Thick' }))
-    expect(await screen.findByText('12.50 CHF')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('12.50 CHF'))
   })
 
   it('multiplies by the field the server nominated', async () => {
@@ -289,7 +290,7 @@ describe('the running total', () => {
     renderForm()
 
     await user.click(await screen.findByRole('button', { name: '+' }))
-    expect(await screen.findByText('20.00 CHF')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('20.00 CHF'))
   })
 })
 
@@ -333,7 +334,9 @@ describe('server violations', () => {
     renderForm()
 
     await user.click(await screen.findByRole('button', { name: 'Place order' }))
+    // The form shows the full sentence; the summary shows a compact count beside the total.
     expect(await screen.findByText('2 things need fixing')).toBeInTheDocument()
+    expect(await screen.findByText('2 to fix')).toBeInTheDocument()
   })
 
   it('uses the singular for one problem', async () => {

@@ -193,7 +193,10 @@ backend/src/food_api/
   api/           routers; no dish-specific branch anywhere
 backend/tests/   unit · contract (parametrised over every dish) · api · integration
 frontend/src/    React + @jsonforms/react; no dish-specific branch anywhere
-  renderers/     chips, option cards, stepper/slider — matched on schema shape, never on a name
+  renderers/     chips · option cards · stepper/slider · date-time with a "Now" button —
+                 every one matched on schema shape, never on a field name
+  OrderSummary   sticky running total, priced from the server's `pricing` block
+  theme.ts       light / dark / follow-system, remembered per browser
 scripts/         setup · dev · check, in Bash and PowerShell
 ```
 
@@ -209,7 +212,7 @@ The setup scripts are thin on purpose: they check prerequisites and delegate to 
 | Lint | `ruff` — ~20 rule families incl. bugbear, bandit, pylint, pathlib |
 | Types | `ty` (Astral) on `src` and `tests` |
 | Backend tests | 378, coverage gate at 85% |
-| Frontend | eslint + `tsc --noEmit` + 33 vitest tests |
+| Frontend | eslint + `tsc --noEmit` + 69 vitest tests |
 | CI | 4 jobs: lint · tests (Meilisearch **service container**, so integration tests really run) · frontend · a Docker stack smoke test that re-checks this README's claims |
 
 ---
