@@ -100,6 +100,7 @@ sitting beside it, and each is a claim the tests hold to.
 | Dependencies | Every version pinned; `uv.lock` and `bun.lock` committed |
 | Containers | Multi-stage builds, non-root user, healthchecks |
 | Secrets | None committed. `.env` is gitignored, `.env.example` documents every variable |
+| Conventions | Laid out to match the official FastAPI full-stack template: `api/routes/`, `api/deps.py`, `api/main.py`, `core/config.py`, `models.py`, `Public`/`Create` model suffixes, `read_*`/`create_*` handlers, `{data, count}` collections |
 
 ---
 

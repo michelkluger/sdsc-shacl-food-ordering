@@ -20,7 +20,7 @@ from meilisearch_python_sdk import AsyncClient
 
 from food_api import __version__
 from food_api.catalog.registry import Catalog, CatalogError
-from food_api.config import Settings, get_settings
+from food_api.core.config import Settings, get_settings
 from food_api.search.client import MeilisearchSearch, SearchUnavailableError
 from food_api.search.indexer import catalog_documents
 

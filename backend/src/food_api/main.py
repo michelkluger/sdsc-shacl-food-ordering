@@ -11,11 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from meilisearch_python_sdk import AsyncClient
 
 from food_api import __version__
-from food_api.api import dishes, health, orders
-from food_api.api import search as search_routes
+from food_api.api.main import api_router
 from food_api.catalog.registry import Catalog
-from food_api.config import Settings, get_settings
-from food_api.domain.errors import register_exception_handlers
+from food_api.core.config import Settings, get_settings
+from food_api.core.errors import register_exception_handlers
 from food_api.search.client import MeilisearchSearch, SearchPort
 
 logger = logging.getLogger(__name__)
@@ -115,10 +114,7 @@ def create_app(
 
     register_exception_handlers(app)
 
-    app.include_router(health.router, prefix=API_PREFIX)
-    app.include_router(dishes.router, prefix=API_PREFIX)
-    app.include_router(orders.router, prefix=API_PREFIX)
-    app.include_router(search_routes.router, prefix=API_PREFIX)
+    app.include_router(api_router, prefix=API_PREFIX)
 
     return app
 

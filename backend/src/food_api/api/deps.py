@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, Path, Request
+from fastapi import Depends, Path, Query, Request
 
 from food_api.catalog.registry import Catalog, Dish
-from food_api.domain.errors import DishNotFoundError
+from food_api.core.errors import DishNotFoundError
+from food_api.core.language import negotiate
 from food_api.search.client import SearchPort
 
 
@@ -41,3 +42,17 @@ def get_dish(
 
 
 DishDep = Annotated[Dish, Depends(get_dish)]
+
+
+def get_language(
+    request: Request,
+    lang: Annotated[
+        str | None,
+        Query(description="Force a language: `en`, `de`, `fr`, `it` or `rm`.", max_length=16),
+    ] = None,
+) -> str:
+    """Resolve the language for this request. See ``core/language.py`` for the rules."""
+    return negotiate(request.headers.get("accept-language"), lang)
+
+
+LanguageDep = Annotated[str, Depends(get_language)]

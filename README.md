@@ -170,7 +170,7 @@ being written for it.
 | Method | Path | |
 |---|---|---|
 | `GET` | `/api/healthz` | Per-component health. `degraded` means search is down, ordering is not |
-| `GET` | `/api/dishes` | The menu |
+| `GET` | `/api/dishes` | The menu, as `{data, count}` |
 | `GET` | `/api/dishes/{slug}` | One catalogue entry |
 | `GET` | `/api/dishes/{slug}/form` | JSON Forms `schema` + `uischema` + the JSON-LD `@context` |
 | `POST` | `/api/orders/{slug}` | Validate against the dish's shape; `201` or `422` with violations |
@@ -187,15 +187,26 @@ and echoes the result in `Content-Language`.
 
 ## Layout
 
+Laid out to match the [official FastAPI full-stack
+template](https://github.com/fastapi/full-stack-fastapi-template) — `api/routes/`, `api/deps.py`,
+`api/main.py`, `core/config.py`, `models.py` — so anyone who knows that template can navigate
+this one.
+
 ```
 backend/src/food_api/
+  main.py        app factory + lifespan
+  models.py      Pydantic request/response models (DishPublic, OrderCreate, …)
+  api/
+    main.py      the aggregated api_router
+    deps.py      catalog, search and language dependencies
+    routes/      dishes · orders · search · health
+  core/          config · errors (RFC 9457) · language negotiation
   data/          vocab/ · shapes/ · context/ · i18n/{de,fr,it,rm}.ttl
                  dishes/{french-tacos,ramen,poke-bowl}/
   catalog/       filesystem discovery; the registry IS the directory listing
   shacl/         introspect → jsonforms → validate → report
   jsonld/        lift a payload into RDF with the generated context
   search/        SearchPort protocol · Meilisearch impl · in-memory fake
-  api/           routers; no dish-specific branch anywhere
 backend/tests/   unit · contract (parametrised over every dish) · api · integration
 frontend/src/    React + @jsonforms/react; no dish-specific branch anywhere
   renderers/     chips · option cards · stepper/slider · date-time with a "Now" button —

@@ -13,7 +13,12 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_PACKAGE_ROOT = Path(__file__).resolve().parent
+import food_api
+
+# Anchored to the package, not to this module: `config.py` moved into `core/` once already
+# and took the data directory with it, which the tests caught immediately but a deployment
+# would not have.
+_PACKAGE_ROOT = Path(food_api.__file__).resolve().parent
 
 
 class Settings(BaseSettings):

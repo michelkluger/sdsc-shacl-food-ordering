@@ -159,8 +159,14 @@ export interface SearchParams {
   allergenFree?: string[]
 }
 
-export const listDishes = (language?: string): Promise<DishSummary[]> =>
-  request<DishSummary[]>('/api/dishes', language)
+/** Collections come back wrapped, which is how the FastAPI template shapes every list. */
+export interface DishesPublic {
+  data: DishSummary[]
+  count: number
+}
+
+export const listDishes = async (language?: string): Promise<DishSummary[]> =>
+  (await request<DishesPublic>('/api/dishes', language)).data
 
 export const searchDishes = (
   { q = '', diet, allergenFree = [] }: SearchParams,

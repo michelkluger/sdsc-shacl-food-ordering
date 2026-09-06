@@ -16,7 +16,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from food_api.catalog.registry import Catalog, Dish
-from food_api.config import Settings
+from food_api.core.config import Settings
 from food_api.main import create_app
 from food_api.search.client import InMemorySearch
 from food_api.search.indexer import catalog_documents

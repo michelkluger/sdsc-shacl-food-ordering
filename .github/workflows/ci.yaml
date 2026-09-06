@@ -223,7 +223,7 @@ jobs:
       - name: The frontend is served and proxies the API
         run: |
           curl --fail --silent --output /dev/null http://localhost:5173/
-          curl --fail --silent http://localhost:5173/api/dishes | grep -q 'ramen'
+          curl --fail --silent http://localhost:5173/api/dishes | grep -q '"count"'
 
       - name: Dump logs on failure
         if: failure()

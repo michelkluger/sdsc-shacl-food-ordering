@@ -22,7 +22,7 @@ from typing import Any
 
 from rdflib import Graph, URIRef
 
-from food_api.config import Settings
+from food_api.core.config import Settings
 from food_api.shacl.introspect import (
     DEFAULT_LANGUAGE,
     SUPPORTED_LANGUAGES,

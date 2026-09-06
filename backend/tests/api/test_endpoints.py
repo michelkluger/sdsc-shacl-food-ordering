@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from httpx import AsyncClient
 
-from food_api.domain.errors import PROBLEM_CONTENT_TYPE
+from food_api.core.errors import PROBLEM_CONTENT_TYPE
 from food_api.search.client import InMemorySearch
 from tests.conftest import load_fixture
 
@@ -43,10 +43,13 @@ async def test_healthz_is_degraded_not_down_when_search_is_unreachable(
     assert search_component["status"] == "unavailable"
 
 
-async def test_list_dishes_uses_camel_case_aliases(client: AsyncClient) -> None:
+async def test_list_dishes_is_a_wrapped_collection(client: AsyncClient) -> None:
+    """Collections are `{data, count}`, the shape the FastAPI template uses everywhere."""
     body = (await client.get("/api/dishes")).json()
-    assert {dish["slug"] for dish in body} >= {"ramen", "french-tacos"}
-    assert "basePrice" in body[0]
+
+    assert {dish["slug"] for dish in body["data"]} >= {"ramen", "french-tacos"}
+    assert body["count"] == len(body["data"])
+    assert "basePrice" in body["data"][0]
 
 
 async def test_get_form_returns_the_three_generated_artefacts(client: AsyncClient) -> None:
@@ -229,7 +232,7 @@ async def test_form_advertises_every_available_language(client: AsyncClient) -> 
 
 async def test_dish_list_is_translated(client: AsyncClient) -> None:
     body = (await client.get("/api/dishes", params={"lang": "it"})).json()
-    ramen = next(dish for dish in body if dish["slug"] == "ramen")
+    ramen = next(dish for dish in body["data"] if dish["slug"] == "ramen")
     assert ramen["cuisine"] == "Giapponese"
 
 

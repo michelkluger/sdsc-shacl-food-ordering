@@ -11,7 +11,7 @@ import pytest
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDFS, SH
 
-from food_api.api.language import negotiate, parse_accept_language
+from food_api.core.language import negotiate, parse_accept_language
 from food_api.shacl.introspect import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, select_literal
 
 FOOD = "https://sdsc.example/ns/food#"
