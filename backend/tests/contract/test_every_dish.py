@@ -135,6 +135,67 @@ def test_every_violation_carries_an_actionable_message(dish: Dish) -> None:
             )
 
 
+#: The shared `food:CustomerNameProperty` says it allows no leading or trailing whitespace. The
+#: trailing-newline cases are why this test exists: SHACL specifies XPath regexes, where `$`
+#: means end-of-string, but pySHACL compiles `sh:pattern` with Python's `re`, where `$` *also*
+#: matches immediately before a single trailing newline. The pattern therefore used to accept
+#: "Ada Lovelace\n" - a value its own comment says it rejects. It is anchored with `\Z` now, and
+#: these pin that down.
+PADDED_NAMES: list[str] = [
+    " Ada Lovelace",
+    "Ada Lovelace ",
+    "Ada Lovelace\n",
+    "Ada Lovelace\r\n",
+    "\nAda Lovelace",
+    "Ada Lovelace\t",
+]
+
+#: Internal spaces, hyphens, apostrophes and non-ASCII letters are all ordinary in a name. The
+#: shape deliberately constrains shape rather than alphabet, and these are the counterweight to
+#: the test above: a pattern that rejected everything would satisfy it.
+ORDINARY_NAMES: list[str] = ["Ada Lovelace", "Jean-Luc", "O'Brien", "Ursula Le Guin", "山田"]
+
+
+def _uses_shared_name(dish: Dish) -> bool:
+    return "customerName" in dish.form.schema["properties"]
+
+
+@pytest.mark.parametrize("name", PADDED_NAMES, ids=repr)
+def test_a_padded_customer_name_is_rejected(dish: Dish, name: str) -> None:
+    """Whitespace at either end must fail, however the string happens to end.
+
+    Parametrised over dishes because `customerName` comes from `shapes/common.ttl`: every dish
+    reusing it inherits the constraint, and a dish that stops reusing it should stop being
+    asserted against it rather than quietly passing.
+    """
+    if not _uses_shared_name(dish):
+        pytest.skip(f"{dish.slug} does not use the shared customerName property")
+
+    payload = {**load_fixture(dish.slug, "valid.json")["data"], "customerName": name}
+    outcome = validate_order(dish, payload)
+
+    assert not outcome.conforms, f"{dish.slug}: accepted a padded name {name!r}"
+    assert any(violation.field == "customerName" for violation in outcome.violations), (
+        f"{dish.slug}: {name!r} was rejected, but not at customerName: "
+        f"{[violation.field for violation in outcome.violations]}"
+    )
+
+
+@pytest.mark.parametrize("name", ORDINARY_NAMES, ids=repr)
+def test_an_ordinary_customer_name_is_accepted(dish: Dish, name: str) -> None:
+    """A name someone actually has must go through."""
+    if not _uses_shared_name(dish):
+        pytest.skip(f"{dish.slug} does not use the shared customerName property")
+
+    payload = {**load_fixture(dish.slug, "valid.json")["data"], "customerName": name}
+    outcome = validate_order(dish, payload)
+
+    assert outcome.conforms, (
+        f"{dish.slug}: rejected the ordinary name {name!r}: "
+        f"{[violation.message for violation in outcome.violations]}"
+    )
+
+
 def test_pricing_is_at_least_the_base_price(dish: Dish) -> None:
     payload = load_fixture(dish.slug, "valid.json")["data"]
     assert price_order(dish, payload) >= dish.summary.base_price

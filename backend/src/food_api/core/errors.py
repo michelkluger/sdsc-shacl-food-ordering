@@ -15,6 +15,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from food_api.core.language import negotiate
 from food_api.shacl.report import Violation
 
 PROBLEM_BASE = "https://sdsc.example/problems/"
@@ -93,6 +94,17 @@ def problem_response(request: Request, error: ProblemError) -> JSONResponse:
         status_code=error.status_code,
         content=jsonable_encoder(body),
         media_type=PROBLEM_CONTENT_TYPE,
+        # A rejected order carries the most translated text the API ever returns - one SHACL
+        # message per violation - so it needs Content-Language as much as a form does. The
+        # handler's injected `Response` cannot supply it: raising discards that object and this
+        # is a fresh one. Re-running the negotiation is the same decision from the same inputs,
+        # not a second rule, because `negotiate` is where the rule lives.
+        headers={
+            "Content-Language": negotiate(
+                request.headers.get("accept-language"),
+                request.query_params.get("lang"),
+            )
+        },
     )
 
 

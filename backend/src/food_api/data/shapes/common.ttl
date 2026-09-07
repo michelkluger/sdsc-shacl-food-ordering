@@ -44,7 +44,12 @@ food:CustomerNameProperty a sh:PropertyShape ;
     # class: SHACL specifies XPath regexes, but pySHACL compiles sh:pattern with Python's `re`,
     # which has no \p{L} Unicode property escapes. A hand-rolled Latin range would quietly
     # reject perfectly ordinary names, so the shape constrains shape, not alphabet.
-    sh:pattern "^\\S(.*\\S)?$" ;
+    #
+    # Anchored with \Z rather than $ for the same reason. In an XPath regex `$` means "end of
+    # string"; in Python it also matches immediately *before* a single trailing newline, so
+    # "Ada Lovelace\n" satisfied `...$` and the shape accepted a name it says it rejects. \Z is
+    # Python's spelling of what `$` already means in the language SHACL actually specifies.
+    sh:pattern "^\\S(.*\\S)?\\Z" ;
     sh:group food:PickupGroup ;
     sh:order 11 ;
     sh:message "Please give a name of 2-60 characters, without leading or trailing spaces." .

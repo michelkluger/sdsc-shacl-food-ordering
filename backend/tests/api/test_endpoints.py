@@ -153,6 +153,18 @@ async def test_a_json_ld_keyword_cannot_buy_an_unvalidated_receipt(client: Async
     assert "@context" in body["violations"][0]["message"]
 
 
+async def test_a_keyword_refusal_is_translated_like_any_other_problem(
+    client: AsyncClient,
+) -> None:
+    """It is still a 422 in the problem envelope, so a client handles it with everything else."""
+    response = await client.post(
+        "/api/orders/ramen?lang=de",
+        json={"data": {"@type": "food:NotAnOrder"}},
+    )
+    assert response.status_code == HTTP_UNPROCESSABLE
+    assert response.headers["content-language"] == "de"
+
+
 async def test_search_returns_hits_and_facets(seeded_client: AsyncClient) -> None:
     body = (await seeded_client.get("/api/search", params={"q": "ramen"})).json()
 
