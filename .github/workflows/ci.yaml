@@ -19,6 +19,65 @@ env:
   BUN_VERSION: "1.3.5"
 
 jobs:
+  # The setup scripts are the first thing a reviewer runs, and their failure modes are silent on
+  # the machine they were written on: a missing exec bit is invisible on Windows, where Git Bash
+  # fakes one, and only bites on a Linux or macOS clone. This job is the cheapest possible guard
+  # against shipping a README whose first command is `Permission denied`.
+  scripts:
+    name: Setup scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Every .sh is executable in the index
+        run: |
+          missing=$(git ls-files -s scripts/*.sh | grep -v '^100755' || true)
+          if [ -n "$missing" ]; then
+            echo "Not executable (fix with 'git update-index --chmod=+x <file>'):" >&2
+            echo "$missing" >&2
+            exit 1
+          fi
+
+      - name: Every .sh has a PowerShell twin, and vice versa
+        run: |
+          for sh in scripts/*.sh; do
+            test -f "${sh%.sh}.ps1" || { echo "$sh has no .ps1 twin" >&2; exit 1; }
+          done
+          for ps in scripts/*.ps1; do
+            test -f "${ps%.ps1}.sh" || { echo "$ps has no .sh twin" >&2; exit 1; }
+          done
+
+      - name: shellcheck
+        run: shellcheck scripts/*.sh
+
+      # Two rules are excluded, both because they target reusable modules rather than scripts a
+      # person runs in a terminal:
+      #   PSAvoidUsingWriteHost - these scripts exist to print coloured progress to a human. That
+      #     is what Write-Host is for; the rule is about functions whose output should be pipeable.
+      #   PSUseUsingScopeModifierInNewRunspaces - a false positive here. dev.ps1 passes state into
+      #     its jobs with `param(...)` plus `-ArgumentList`, which is the correct alternative to
+      #     `$using:`; the analyzer does not follow the binding.
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          $found = Invoke-ScriptAnalyzer -Path scripts -Severity Error, Warning `
+            -ExcludeRule PSAvoidUsingWriteHost, PSUseUsingScopeModifierInNewRunspaces
+          if ($found) {
+            $found | Format-Table RuleName, ScriptName, Line, Message -AutoSize |
+              Out-String -Width 200 | Write-Host
+            exit 1
+          }
+          Write-Host 'PSScriptAnalyzer: clean'
+
+      # Runs the scripts far enough to prove they parse, dispatch and reject bad input under a
+      # real bash — not the Git Bash they were written in.
+      - name: The scripts run
+        run: |
+          ./scripts/setup.sh --help
+          ./scripts/check.sh --help
+          ! ./scripts/setup.sh --nonsense
+
   backend-lint:
     name: Backend lint and types
     runs-on: ubuntu-latest
@@ -94,9 +153,14 @@ jobs:
         working-directory: backend
         run: uv run pytest --cov=food_api --cov-report=xml --cov-report=term-missing --cov-fail-under=85
 
+      # `pytest --collect-only` exits 5 when the marker matches nothing, which is exactly the
+      # "the integration tests quietly stopped existing" case this step is here to catch. It is
+      # deliberately not piped into anything: the shell reports the exit status of the *last*
+      # command in a pipeline and GitHub does not set `pipefail`, so `| tail` would swallow the
+      # 5 and leave a guard that cannot fail.
       - name: Confirm the integration tests were not silently skipped
         working-directory: backend
-        run: uv run pytest -m integration --collect-only -q | tail -1
+        run: uv run pytest -m integration --collect-only -q
 
       - uses: actions/upload-artifact@v7
         if: always()
