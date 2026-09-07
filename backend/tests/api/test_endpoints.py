@@ -172,6 +172,23 @@ async def test_search_filters_by_cuisine(seeded_client: AsyncClient) -> None:
     assert [hit["slug"] for hit in body["hits"]] == ["french-tacos"]
 
 
+async def test_a_filter_value_cannot_inject_a_clause(seeded_client: AsyncClient) -> None:
+    """Meilisearch filters are an expression language, and `cuisine` is interpolated into one.
+
+    Unescaped, `Japanese' OR cuisine = 'French` would have closed the literal and appended a
+    clause of the client's choosing. Quoted correctly it is one absurd cuisine name that matches
+    nothing - which is the right answer, and is what this asserts.
+    """
+    body = (
+        await seeded_client.get(
+            "/api/search",
+            params={"cuisine": "Japanese' OR cuisine = 'French"},
+        )
+    ).json()
+
+    assert body["hits"] == []
+
+
 async def test_search_excludes_dishes_by_allergen(seeded_client: AsyncClient) -> None:
     body = (await seeded_client.get("/api/search", params={"allergenFree": "gluten"})).json()
     assert all("gluten" not in hit["allergens"] for hit in body["hits"])

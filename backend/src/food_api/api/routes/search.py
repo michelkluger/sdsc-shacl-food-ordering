@@ -17,6 +17,22 @@ router = APIRouter(prefix="/search", tags=["search"])
 MAX_LIMIT = 50
 
 
+def _quote(value: str) -> str:
+    """Render ``value`` as a single-quoted Meilisearch filter literal.
+
+    Meilisearch filters are an expression language, not a parameterised query: the SDK offers no
+    placeholder binding, so the only defence is to make the quoting correct here. A cuisine of
+    ``Japanese' OR slug = 'ramen`` would otherwise close the literal and append a clause of the
+    client's choosing.
+
+    Meilisearch's own escape is a backslash before the quote or backslash, so both are escaped
+    and the result is wrapped. Doing it in one function rather than at each call site means a
+    filter added later cannot forget.
+    """
+    escaped = value.replace("\\", r"\\").replace("'", r"\'")
+    return f"'{escaped}'"
+
+
 @dataclass
 class SearchQuery:
     """The query string parameters, grouped so the handler stays a two-liner.
@@ -42,10 +58,12 @@ class SearchQuery:
         """
         expressions: list[str] = []
         if self.cuisine:
-            expressions.append(f"cuisine = '{self.cuisine}'")
+            expressions.append(f"cuisine = {_quote(self.cuisine)}")
         if self.diet:
-            expressions.append(f"diets = '{self.diet}'")
-        expressions.extend(f"allergens != '{allergen}'" for allergen in self.allergen_free or [])
+            expressions.append(f"diets = {_quote(self.diet)}")
+        expressions.extend(
+            f"allergens != {_quote(allergen)}" for allergen in self.allergen_free or []
+        )
         return expressions
 
 
