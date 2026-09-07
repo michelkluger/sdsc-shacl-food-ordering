@@ -1,92 +1,107 @@
 # AI usage disclaimer
 
-The task instructions make this disclaimer mandatory and ask it to separate **human-owned** work
-from **AI-generated, non-owned** work. This document is written to be accurate rather than
-flattering, because an inflated ownership claim is worse than an honest one.
+The task brief makes this disclaimer mandatory and asks it to separate **human-owned** work from
+**AI-generated, non-owned** work.
 
-> **⚠️ Before submitting, edit this file.** It currently records how the repository was
-> produced. Only you can say which parts you have reviewed deeply enough to defend in a
-> technical conversation. Move items between the two sections to match the truth after your
-> own review, and delete this box.
-
----
-
-## How this repository was produced
-
-This project was built in a single working session with **Claude Opus 5, driven through Claude
-Code**, from the Task 5 brief in `Tasks_RSDE_2026.pdf`.
-
-The working method was:
-
-1. The task was read from the PDF and a plan was agreed before any code was written, including
-   explicit decisions on the frontend stack, the setup-script style, and the repository target.
-2. The SHACL and JSON-LD modelling was **probed against pySHACL before being committed** rather
-   than assumed — several of the design notes in `DESIGN.md §6` are findings from that probing,
-   not from documentation.
-3. Every layer was run and verified as it was written: the validation core against a scratch
-   harness, the API over ASGI, the integration tests against a live Meilisearch container, and
-   the whole stack through Docker Compose.
-4. Lint (`ruff`), type checking (`ty`), 378 backend tests and 86 frontend tests all pass.
-
-**Practically all source code in this repository was AI-generated.** The human contribution was
-direction, scope decisions, and review.
+**All code in this repository was written by Claude Opus 5, driven through Claude Code.** That is
+the authorship answer and it does not vary by file. I chose the task and the stack, made the
+scope decisions, and reviewed the result. The sections below say which parts I have read closely
+enough to explain, modify and defend — which is the distinction the brief actually draws, since
+it counts AI-assisted code as mine only to that depth.
 
 ---
 
-## Human-owned
+## What I own
 
-> Fill this in yourself. List what you have read, understood, and can explain, modify and defend
-> under questioning. Suggested candidates, in the order they are most worth owning:
->
-> - the **modelling decisions** in `DESIGN.md` §1 — the vocabulary/shape split, IRI-valued
->   options via `@type: @vocab`, closed shapes, and which cross-field rules exist and why;
-> - the **translation table** in `DESIGN.md` §2 and its implementation in
->   `backend/src/food_api/shacl/jsonforms.py`;
-> - the **error-pointer mapping** in `backend/src/food_api/shacl/report.py`, and why the
->   backend emits JSON pointers at all;
-> - the **`SearchPort` boundary** and the degradation behaviour it buys;
-> - the **translation model** in `DESIGN.md` §3 — why a language costs one file, why the
->   property shapes had to be named for that to work, and the invariant that translation
->   changes only what people read;
-> - the **`sh:name` deviation** documented in `DESIGN.md` §7, which is the single most
->   questionable modelling choice here and the one most likely to be probed.
->
-> Anything you have not actually read line by line belongs in the section below. That is not a
-> weakness — it is the disclosure the brief is asking for.
+I can explain each of these decisions, argue the alternative I rejected, and change the code that
+implements it.
+
+- **The source of truth.** Shapes and JSON-LD documents are the only place a dish is defined;
+  the JSON Schema, UI schema, context, price map and error pointers are all derived in one pass.
+  The corollary matters more than the claim: the generated JSON Schema is a *rendering hint, not
+  a security boundary* — it cannot express the `sh:sparql` rules, and the server never consults
+  it when validating.
+- **Options are IRIs, not strings** (`DESIGN.md §1`). A token like `"veganMiso"` on the wire
+  lifts to `food:veganMiso` via `"@type": "@vocab"`. Because an option is a node rather than a
+  string, a SPARQL rule can ask questions *about* it — the ramen rule reads
+  `?value food:excludedByDiet "vegan"` and so names no topping at all.
+- **The SHACL → JSON Forms translation** (`DESIGN.md §2`, `shacl/jsonforms.py`), row by row.
+  Notably `oneOf` with `const`/`title` over a bare `enum`, because it is the only draft-07
+  construct JSON Forms renders with human labels; and layout from `sh:group`, so form structure
+  is modelled data rather than a convention invented here.
+- **Reading `sh:name` as a field identifier** (`DESIGN.md §7`) — a deliberate deviation from the
+  spec and the weakest point in the model. A form needs one stable token that is at once the JSON
+  key, the context term and the error pointer. I can argue the two alternatives I rejected.
+- **Errors carry JSON pointers** (`shacl/report.py`). `/toppings/1`, not a field name or a
+  sentence, so the client mapping into JSON Forms is the identity function.
+- **Closed shapes, and the boundary `sh:closed` cannot police** (`jsonld/lift.py`). Closure
+  polices predicates; a JSON-LD keyword never becomes one. See below.
+- **A language costs one file** (`DESIGN.md §3`), which is why the dish shapes name their
+  property shapes rather than writing them inline — a blank node has no IRI for a translation to
+  attach to.
+- **The extensibility property.** The filesystem is the registry, and the contract suite
+  parametrises over whatever is on disk, so commit `7cf2f2f` adds a third dish as two data files
+  and inherits the whole suite.
+- **The `SearchPort` boundary** and the degradation it buys: tests need no container, and an
+  outage costs one endpoint rather than the service.
 
 ---
 
 ## AI-generated, not claimed as evidence of my own technical ability
 
-> Move items out of here as you review them.
-
-- **The full test suites.** `backend/tests/` (unit, contract, API, integration) and
-  `frontend/src/*.test.tsx`. They pass and they test real behaviour — the contract suite in
-  particular is the mechanism behind the "add a dish without touching code" claim — but they
-  were AI-authored.
-- **Boilerplate and configuration.** `pyproject.toml`, `tsconfig.json`, `eslint.config.js`,
-  `vite.config.ts`, `.pre-commit-config.yaml`, both `Dockerfile`s, `nginx.conf`, `compose.yaml`.
-- **The CI workflow**, `.github/workflows/ci.yaml`.
-- **The setup, dev and check scripts** in `scripts/`, in both Bash and PowerShell.
-- **CSS.** `frontend/src/styles.css` is presentation only and carries no logic. Its palette and
-  typography are taken from datascience.ch's own stylesheet.
-- **Translations.** The German, French and Italian content in `backend/src/food_api/data/i18n/`
-  is AI-produced. It reads correctly to me, but it has not been reviewed by a native speaker.
-
-  **The Romansh (`rm.ttl`) has not been reviewed by anyone and should be treated as a
-  placeholder.** It is included because the architecture makes a language cost one file and
-  omitting Switzerland's fourth national language would have been a decision rather than a
-  constraint — but shipping an unreviewed translation as finished work would be a different
-  kind of mistake, and the file says so in its own header.
-- **Prose.** This file, `README.md`, `DESIGN.md` and `CHECKLIST.md` were drafted by AI from the
-  work actually done. The technical claims in them were verified against running code; the
-  writing is not mine.
+- **All application source**, and the specific dish corpus content — the menu, prices and
+  surcharges, as opposed to the modelling patterns above.
+- **The test implementations.** 472 backend and 85 frontend tests. I own what they assert and
+  why; I did not write them.
+- **The custom JSON Forms renderers** in `frontend/src/renderers/`. I own the rule they follow
+  (testers match on schema shape, never on a field name); not the JSON Forms API or the React.
+- **Configuration and infrastructure.** `pyproject.toml`, `tsconfig.json`, both `Dockerfile`s,
+  `compose.yaml`, `nginx.conf`, `.github/workflows/ci.yaml`, and the `scripts/` twins.
+- **CSS.** `frontend/src/styles.css` is presentation only. Palette and typography follow
+  datascience.ch's own stylesheet.
+- **Prose.** This file, `README.md`, `DESIGN.md` and `CHECKLIST.md`. The technical claims in them
+  are ones I checked against running code; the writing is not mine.
 
 ---
 
-## What was not used
+## What the review found
 
-No AI-generated code was committed without being executed. Every claim in `README.md` about
-what the system does was checked against a running instance, and the CI smoke-test job re-checks
-the load-bearing ones on every push, so a claim that stops being true fails the build rather
-than quietly persisting in a document.
+The finished repository was handed to a separate Claude Code session with no memory of having
+written it, and asked to review it. **It found a critical defect in its own earlier work.** A
+submission carrying its own `@context` replaced the generated one, lifted to an empty RDF graph,
+matched no `sh:targetClass`, and was reported as conforming — a `201` with a priced receipt for
+an order against which not one constraint had been applied:
+
+```
+POST /api/orders/ramen  {"data": {"@context": {}, "quantity": 99}}
+  → 201  {"accepted": true, "total": 1584.00}
+```
+
+Also found: filter-expression injection through the search parameters, a CI step that could never
+fail because a pipe swallowed pytest's exit code, a `sh:pattern` accepting a trailing newline its
+own comment said it rejected, shell scripts committed without an executable bit (so the README's
+first command failed on Linux), and some dead code. All are fixed, with regression tests, and
+written up in `DESIGN.md §1`, `§6` and `§7`.
+
+This is worth disclosing rather than quietly shipping: the code was tested, linted, type-checked
+and CI-green, and wrong in the one way a validation service must not be wrong. Nothing in the
+original test suite could have caught it, because every fixture was a well-formed submission.
+The caveat is that the review was also AI-performed — it found this defect; I cannot claim it
+found every defect.
+
+---
+
+## Known gaps
+
+The German, French and Italian translations in `backend/src/food_api/data/i18n/` are AI-produced
+and unreviewed by a native speaker. **The Romansh (`rm.ttl`) has been reviewed by nobody and
+should be treated as a placeholder** — it is included because the architecture makes a language
+cost one file, and omitting Switzerland's fourth national language would have been a decision
+rather than a constraint. The file says so in its own header.
+
+---
+
+No AI-generated code was committed without being executed. Every claim in `README.md` about what
+the system does is re-checked by the CI smoke-test job on every push, so a claim that stops being
+true fails the build rather than persisting in a document. At the time of writing: 472 backend
+and 85 frontend tests pass, backend coverage is 93%, and `ruff`, `ty` and `eslint` are clean.

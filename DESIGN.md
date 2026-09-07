@@ -56,6 +56,26 @@ than silently ignored. A form that accepts `{"secretDiscount": "free"}` without 
 not validating anything. `sh:ignoredProperties` exempts `rdf:type` and `food:dish`, both of
 which the *server* sets — a client cannot smuggle in a different dish by putting one in the body.
 
+### The payload is data, never JSON-LD
+
+`sh:closed` polices the *fields* of a submission. It cannot police the submission's JSON-LD
+**keywords**, because those never become predicates — they are consumed while the document is
+being read, and decide how everything else is read. A payload carrying `"@context": {}` lifts
+to an empty graph: no `food:Order` node, so `sh:targetClass` matches nothing, so pySHACL
+reports `conforms` and the order is accepted without a single constraint having been applied.
+The most dangerous shape a validator failure can take is the one that looks like success.
+
+Two things prevent it, in `jsonld/lift.py`. The server's keys (`@context`, `@id`, `@type`,
+`dish`) are spread *after* the payload, so they win rather than being overwritten. And any
+payload key beginning with `@` is refused outright, before lifting, as a `MalformedPayload`
+violation.
+
+The second is not redundant. The first defence lives in the order of a dict literal — invisible,
+and undone by a refactor that reads as tidying. It also only covers the four keywords we happen
+to set: `@graph`, `@nest` and whatever JSON-LD adds next would sail past it. Refusing the whole
+`@` namespace is a rule that can be read, and it tells the client what it did wrong instead of
+silently accepting an order nobody checked.
+
 ### Meaningful constraints, not decorative ones
 
 Every dish exercises cardinality (`1..2` meats, `0..5` toppings), enumeration, datatypes,
@@ -211,9 +231,14 @@ files, nothing else. The contract suite in `backend/tests/contract/` parametrise
 is on disk, so that dish inherited 13 tests without a line of test code being written for it.
 
 The same commit is why the third dish is worth having: its shape exercises a required
-multi-valued property with a lower bound above zero, and a cross-field rule keyed on a *count*
-of annotated values rather than on one field's value. Neither appears in the first two dishes,
-so it is evidence the translator generalises rather than having been fitted to them.
+multi-valued property with a lower bound above zero (`1..2` proteins), and a cross-field rule
+that quantifies over *every* value of a multi-valued field rather than testing a single one.
+The ramen rule is existential — *some* chosen topping is non-vegan — and a `FILTER` finds it.
+The poke rule is universal — *every* chosen protein is plant-based, so a non-vegan dressing
+contradicts the bowl — which SHACL-SPARQL can only express as `FILTER NOT EXISTS` over the
+negation, and which reads correctly for the empty case as a bonus. Neither shape appears in the
+first two dishes, so it is evidence the translator generalises rather than having been fitted to
+them.
 
 ---
 
@@ -260,6 +285,14 @@ without one the violation has no JSON pointer and floats free of the form.
 constraint therefore checks *shape* — no leading/trailing whitespace — not alphabet, which is
 also the more inclusive choice.
 
+**The same divergence bites again at the anchor**, and this one was silent. In an XPath regex
+`$` means end-of-string; in Python it *also* matches immediately before a single trailing
+newline. `^\S(.*\S)?$` therefore accepted `"Ada Lovelace\n"` — a value the shape's own comment
+says it rejects — and every fixture passed, because no fixture ended in a newline. The pattern is
+anchored with `\Z`, which is Python's spelling of what `$` already means in the language SHACL
+actually specifies. Found by review rather than by a test, which is the point: a constraint that
+is *slightly* too permissive produces no failing test anywhere.
+
 **`sh:closed` messages are built in the report layer**, not with an `sh:message` on the node
 shape: SHACL applies a node shape's message to *every* constraint it carries, so declaring one
 there appends "unknown field" to unrelated violations. pySHACL's default text also names the
@@ -291,6 +324,14 @@ error pointer, and `sh:name` is the only per-property naming slot SHACL offers. 
 supplies the display title instead. This is a deliberate deviation and the one thing in the
 model I would most want to discuss.
 
+**Meilisearch filter escaping is hand-rolled.** Filters are an expression language and the SDK
+offers no placeholder binding, so every query parameter that reaches one is interpolated into a
+string. `_quote` in `api/routes/search.py` is therefore the whole boundary between a search
+parameter and executable filter syntax — backslash escaped before quote, since the other order
+leaves the literal closable. Unit tests count unescaped quotes and the integration suite checks
+that real Meilisearch agrees, but a hand-written escaper is a hand-written escaper: with a
+Meilisearch API that took bound parameters, this code would not exist.
+
 **Only simple IRI paths.** Sequence, alternative and inverse `sh:path`s have no flat JSON
 equivalent, so the translator rejects them at load time rather than dropping the field. Nested
 objects would mean nested JSON Schema and a recursive translator — a real extension, not a
@@ -301,10 +342,6 @@ mechanism that could express *some* of them (show/hide, enable/disable), but not
 `FILTER NOT EXISTS` over vocabulary annotations. Today they are enforced only on submit. The
 honest framing: the client gets fast feedback on what JSON Schema can express, and the server
 is the authority on everything.
-
-**Errors accumulate rather than replace.** A field showing a server violation also shows Ajv's
-own optimistic message, and the vanilla renderers concatenate them. Distinguishable
-programmatically (`keyword: 'shacl'`), not visually.
 
 **Icons are SVG, not Unicode glyphs.** `☀` (U+2600) has an emoji presentation, so Windows and
 Chrome render it through Segoe UI Emoji as a full-colour **orange** sun — a colour from nowhere

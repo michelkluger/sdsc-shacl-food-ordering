@@ -46,7 +46,11 @@ bun install --cwd frontend
 ./scripts/dev.sh        # API and Vite on the host, both with reload
 ```
 
-On Windows PowerShell: `./scripts/setup.ps1`, `./scripts/dev.ps1`, `./scripts/check.ps1`.
+Each script has a PowerShell twin with the same behaviour: `./scripts/setup.ps1`,
+`./scripts/dev.ps1`, `./scripts/check.ps1`. They need **PowerShell 7+** (`pwsh`), not the
+Windows PowerShell 5.1 that ships with Windows — they declare `#Requires -Version 7.0` and will
+refuse to run on 5.1 rather than half-working. The `.sh` scripts need `bash`, so on Windows they
+work under Git Bash or WSL.
 
 > Port 7700 already in use? Set `MEILI_PORT` in `.env` — every port is configurable there.
 
@@ -181,7 +185,8 @@ Every error — unknown dish, malformed body, constraint violation, search outag
 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem-details envelope.
 
 Every endpoint that returns readable text negotiates language via `?lang=` or `Accept-Language`,
-and echoes the result in `Content-Language`.
+and echoes the result in `Content-Language` — problem responses included, since a rejected order
+carries one translated SHACL message per violation.
 
 ---
 
