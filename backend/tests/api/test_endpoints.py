@@ -133,6 +133,26 @@ async def test_a_dish_cannot_be_ordered_against_another_dishs_shape(client: Asyn
     assert response.status_code == HTTP_UNPROCESSABLE
 
 
+async def test_a_json_ld_keyword_cannot_buy_an_unvalidated_receipt(client: AsyncClient) -> None:
+    """The bypass, asserted at the layer that actually shipped it.
+
+    `tests/contract/test_payload_boundary.py` covers the rule for every dish. This one is here
+    because the bug was only ever visible from outside: `POST` a payload carrying its own
+    `@context` and the API answered `201` with a priced receipt for an order no constraint had
+    been applied to. A unit test asserting `not conforms` would not have shown that.
+    """
+    response = await client.post(
+        "/api/orders/ramen",
+        json={"data": {"@context": {}, "quantity": 99}},
+    )
+    body = response.json()
+
+    assert response.status_code == HTTP_UNPROCESSABLE
+    assert response.headers["content-type"].startswith(PROBLEM_CONTENT_TYPE)
+    assert [violation["constraint"] for violation in body["violations"]] == ["MalformedPayload"]
+    assert "@context" in body["violations"][0]["message"]
+
+
 async def test_search_returns_hits_and_facets(seeded_client: AsyncClient) -> None:
     body = (await seeded_client.get("/api/search", params={"q": "ramen"})).json()
 
