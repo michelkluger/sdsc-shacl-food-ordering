@@ -114,11 +114,3 @@ export function summarise(definition: FormDefinition, data: Record<string, unkno
     currency,
   }
 }
-
-/** The total alone, for callers that do not need the breakdown. */
-export function estimateTotal(
-  definition: FormDefinition,
-  data: Record<string, unknown>,
-): number {
-  return summarise(definition, data).total
-}

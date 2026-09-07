@@ -32,7 +32,6 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "SHACL-driven food ordering API"
-    debug: bool = False
 
     data_dir: Path = Field(
         default=_PACKAGE_ROOT / "data",

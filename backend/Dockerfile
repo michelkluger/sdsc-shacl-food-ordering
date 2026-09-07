@@ -25,11 +25,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.13-slim-bookworm AS runtime
 
-# curl is used by the compose healthcheck and by anyone debugging inside the container.
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 10001 appuser
+# No curl: the compose healthcheck probes /api/healthz with the interpreter that is already in
+# the image (`python -c urllib...`), so installing an HTTP client to do the same job would be
+# one more package in the runtime layer for nothing.
+RUN useradd --create-home --uid 10001 appuser
 
 WORKDIR /app
 

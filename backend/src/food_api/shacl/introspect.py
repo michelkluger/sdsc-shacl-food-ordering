@@ -19,7 +19,7 @@ from rdflib.collection import Collection
 from rdflib.namespace import SH, XSD
 from rdflib.term import Node
 
-from food_api.namespaces import FOOD
+from food_api.namespaces import FOOD, localname
 
 # Datatypes we are willing to put in a form. Anything else is a modelling mistake we would
 # rather surface loudly than render as a broken control.
@@ -102,16 +102,6 @@ class PropertyConstraints:
         return bool(self.options)
 
 
-def _localname(iri: str) -> str:
-    for sep in ("#", "/"):
-        if sep in iri:
-            head, _, tail = iri.rpartition(sep)
-            if tail:
-                return tail
-            del head
-    return iri
-
-
 def _scalar(value: Node | None) -> Any:
     """Convert an rdflib term to the Python value we want in JSON."""
     if value is None:
@@ -119,7 +109,7 @@ def _scalar(value: Node | None) -> Any:
     if isinstance(value, Literal):
         return value.toPython()
     if isinstance(value, URIRef):
-        return _localname(str(value))
+        return localname(str(value))
     return str(value)
 
 
@@ -198,7 +188,7 @@ def _strings(graph: Graph, subject: Node, predicate: URIRef) -> tuple[str, ...]:
 
 def _read_option(graph: Graph, term: Node, language: str) -> OptionTerm:
     iri = str(term)
-    token = _localname(iri)
+    token = localname(iri)
     return OptionTerm(
         iri=iri,
         token=token,
@@ -224,7 +214,7 @@ def _read_group(graph: Graph, property_shape: Node, language: str) -> PropertyGr
     iri = str(group)
     return PropertyGroup(
         iri=iri,
-        label=_label(graph, group, _localname(iri), language),
+        label=_label(graph, group, localname(iri), language),
         order=_decimal(graph, group, SH.order) or Decimal(0),
     )
 
@@ -243,7 +233,7 @@ def _read_property(graph: Graph, property_shape: Node, language: str) -> Propert
     # naming slot SHACL offers. `rdfs:label` supplies the display title instead. The deviation
     # is deliberate and written up in DESIGN.md.
     name_literal = _one(graph, property_shape, SH.name)
-    name = str(name_literal) if name_literal is not None else _localname(str(path))
+    name = str(name_literal) if name_literal is not None else localname(str(path))
 
     # Everything a person reads is language-selected; `sh:name` deliberately is not, because it
     # is the wire contract. A German form and an English form describe the same JSON keys.

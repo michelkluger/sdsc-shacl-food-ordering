@@ -8,7 +8,7 @@ files exist - the same property the production code claims.
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +22,6 @@ from food_api.search.client import InMemorySearch
 from food_api.search.indexer import catalog_documents
 
 FIXTURES = Path(__file__).parent / "fixtures"
-GOLDEN = Path(__file__).parent / "golden"
 
 
 @pytest.fixture(scope="session")
@@ -109,7 +108,3 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     catalog = Catalog(Settings()).load()
     dishes: list[Dish] = list(catalog.list_dishes())
     metafunc.parametrize("dish", dishes, ids=[dish.slug for dish in dishes])
-
-
-def iter_dish_slugs() -> Iterator[str]:
-    yield from Catalog(Settings()).load().slugs

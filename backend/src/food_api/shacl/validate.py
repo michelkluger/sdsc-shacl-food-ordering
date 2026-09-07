@@ -26,9 +26,6 @@ class ValidationOutcome:
     conforms: bool
     violations: tuple[Violation, ...]
     order_iri: str
-    #: pySHACL's human-readable report. Returned only in debug mode; useful when a shape,
-    #: rather than a payload, is the thing that is wrong.
-    report_text: str = ""
 
 
 def validate_order(
@@ -67,7 +64,10 @@ def validate_order(
             order_iri=order_iri,
         )
 
-    conforms, report_graph, report_text = pyshacl.validate(
+    # pySHACL's third return value is its own human-readable report. Nothing consumes it: the
+    # structured violations below are what both the API and the tests read, and a second,
+    # differently-worded rendering of the same failures is a thing that can drift.
+    conforms, report_graph, _ = pyshacl.validate(
         data_graph,
         shacl_graph=dish.shapes_graph,
         advanced=True,
@@ -88,7 +88,6 @@ def validate_order(
         conforms=bool(conforms),
         violations=violations,
         order_iri=order_iri,
-        report_text=report_text,
     )
 
 

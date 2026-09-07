@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { FormDefinition } from './api'
-import { estimateTotal, summarise } from './pricing'
+import { summarise } from './pricing'
 
 const DISH: FormDefinition = {
   dish: {
@@ -141,12 +141,5 @@ describe('summarise', () => {
       pricing: { ...DISH.pricing, basePrice: 0.1, surcharges: { thickness: { thick: 0.2 } } },
     }
     expect(summarise(awkward, { thickness: 'thick' }).total).toBe(0.3)
-  })
-})
-
-describe('estimateTotal', () => {
-  it('agrees with the summary it wraps', () => {
-    const data = { thickness: 'thick', garnishes: ['zest'], blorpCount: 2 }
-    expect(estimateTotal(DISH, data)).toBe(summarise(DISH, data).total)
   })
 })

@@ -16,6 +16,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import SH
 from rdflib.term import Node
 
+from food_api.namespaces import localname
 from food_api.shacl.introspect import DEFAULT_LANGUAGE, select_literal
 from food_api.shacl.jsonforms import FormDefinition
 
@@ -50,22 +51,13 @@ class Violation:
         }
 
 
-def _localname(iri: str) -> str:
-    for sep in ("#", "/"):
-        if sep in iri:
-            tail = iri.rpartition(sep)[2]
-            if tail:
-                return tail
-    return iri
-
-
 def _compact(node: Node | None, form: FormDefinition) -> Any:
     """Render a report value the way the client sent it: a token, not an IRI."""
     if node is None:
         return None
     if isinstance(node, URIRef):
         iri = str(node)
-        return form.token_by_iri.get(iri, _localname(iri))
+        return form.token_by_iri.get(iri, localname(iri))
     if isinstance(node, Literal):
         return node.toPython()
     return str(node)
@@ -171,12 +163,12 @@ def collect_violations(
             # `sh:closed` reports the *offending* predicate, which by definition is not one of
             # the shape's known paths. Recover the client's key from the local name when the
             # payload actually carries it, so "unknown field" lands on that field.
-            candidate = _localname(path)
+            candidate = localname(path)
             field = candidate if candidate in payload else None
 
         value = _compact(value_node, form)
         messages = _messages(report, result, language, shapes)
-        constraint = _localname(str(constraint_node)) if constraint_node is not None else "Unknown"
+        constraint = localname(str(constraint_node)) if constraint_node is not None else "Unknown"
 
         violations.append(
             Violation(
@@ -219,7 +211,7 @@ def _message_for(
     generated message names the internal order IRI, which no client should ever see.
     """
     if constraint == "ClosedConstraintComponent":
-        name = field or (_localname(path) if path else "?")
+        name = field or (localname(path) if path else "?")
         # The one message in the system with no shape behind it: pySHACL generates it, and its
         # generated text names the internal order IRI. Because there is no sh:message to
         # translate, the wording lives here - the single exception to "messages come from the

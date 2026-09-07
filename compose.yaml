@@ -40,7 +40,6 @@ services:
       FOOD_API_MEILI_URL: http://meilisearch:7700
       FOOD_API_MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-devMasterKeyChangeMe}
       FOOD_API_CORS_ORIGINS: '["http://localhost:5173","http://localhost:4173","http://localhost:8080"]'
-      FOOD_API_DEBUG: ${FOOD_API_DEBUG:-false}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:

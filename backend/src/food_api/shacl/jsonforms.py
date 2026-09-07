@@ -115,12 +115,10 @@ def _property_schema(prop: PropertyConstraints) -> dict[str, Any]:
 
     if prop.is_multi_valued:
         schema: dict[str, Any] = {"type": "array", "items": inner, "uniqueItems": True}
-        # A sh:minCount above 1 constrains how many values there must be, which for an array is
-        # minItems. Required-ness itself is expressed in the schema's `required` list.
-        if prop.min_count and prop.min_count > 1:
+        # sh:minCount says how many values there must be, which for an array is minItems.
+        # Required-ness itself is expressed separately, in the schema's `required` list.
+        if prop.min_count:
             schema["minItems"] = prop.min_count
-        elif prop.min_count:
-            schema["minItems"] = 1
         if prop.max_count is not None:
             schema["maxItems"] = prop.max_count
     else:
