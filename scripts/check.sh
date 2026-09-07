@@ -35,7 +35,11 @@ run_backend() {
 
 if [ "$FIX" -eq 1 ]; then
     step "Formatting and autofixing"
-    (cd backend && uv run ruff format src tests && uv run ruff check --fix src tests)
+    # `|| true`, because `ruff check --fix` exits non-zero when anything is left that it cannot
+    # fix automatically. Under `set -e` that would abort the run, so `--fix` would report the
+    # unfixable lint and then never get as far as the tests - the opposite of what it is for.
+    # The `ruff check` step below reports whatever survived, and sets the exit code.
+    (cd backend && uv run ruff format src tests && uv run ruff check --fix src tests) || true
 fi
 
 run_backend "ruff format --check" ruff format --check src tests

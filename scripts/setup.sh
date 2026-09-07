@@ -20,7 +20,7 @@ for arg in "$@"; do
     case "$arg" in
         --full)    FULL=1 ;;
         --no-seed) SEED=0 ;;
-        -h|--help) sed -n '2,12p' "$0" | sed 's/^# \?//'; exit 0 ;;
+        -h|--help) sed -n '2,10p' "$0" | sed 's/^# \?//'; exit 0 ;;
         *) echo "Unknown option: $arg" >&2; exit 2 ;;
     esac
 done
@@ -54,8 +54,14 @@ info "Starting Meilisearch"
 docker compose up -d meilisearch
 ok "meilisearch container up"
 
+# Load .env into the environment so the CLI sees the same configuration as the containers do.
+# `set -a` exports everything the file assigns; the directive has to sit directly above the
+# `.` for shellcheck to honour it, and .env is generated above rather than committed, so there
+# is nothing for it to follow.
+set -a
 # shellcheck disable=SC1091
-set -a; . ./.env; set +a
+. ./.env
+set +a
 export FOOD_API_MEILI_MASTER_KEY="${MEILI_MASTER_KEY:-devMasterKeyChangeMe}"
 export FOOD_API_MEILI_URL="http://localhost:${MEILI_PORT:-7700}"
 

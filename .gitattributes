@@ -1,0 +1,15 @@
+# Line endings.
+#
+# The rule that matters is the second one. A shell script checked out with CRLF is broken on
+# Unix — the shebang becomes `/usr/bin/env bash\r`, and bash reports
+# `bad interpreter: /usr/bin/env bash^M`, which reads as "bash is missing" rather than "this
+# file has the wrong line endings". A Windows clone with `core.autocrlf=true` would introduce
+# exactly that, so `.sh` files are pinned to LF regardless of the cloning platform's settings.
+#
+# Everything else is marked `-text`, meaning "never convert": the repository has a mix of LF and
+# CRLF files, and normalising them now would rewrite most of it for no functional gain. `-text`
+# keeps every checkout byte-for-byte identical to what was committed, which is what makes the
+# mix harmless rather than platform-dependent.
+
+* -text
+*.sh text eol=lf

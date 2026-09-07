@@ -28,12 +28,13 @@ $repoRoot = $PWD.Path
 
 function Write-Step { param([string]$Message) Write-Host "==> $Message" -ForegroundColor Cyan }
 function Write-Ok   { param([string]$Message) Write-Host "  ok $Message" -ForegroundColor Green }
-function Stop-With  { param([string]$Message) Write-Host "error: $Message" -ForegroundColor Red; exit 1 }
+# Prints and exits; not a `Stop-*` verb, which PSScriptAnalyzer would require ShouldProcess for.
+function Write-Failure { param([string]$Message) Write-Host "error: $Message" -ForegroundColor Red; exit 1 }
 
 function Test-Requirement {
     param([string]$Name, [string]$Hint)
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        Stop-With "$Name is required but not on PATH. $Hint"
+        Write-Failure "$Name is required but not on PATH. $Hint"
     }
 }
 
@@ -41,9 +42,9 @@ Write-Step 'Checking prerequisites'
 Test-Requirement 'docker' 'Install Docker Desktop: https://docs.docker.com/get-docker/'
 Test-Requirement 'uv' 'Install uv: https://docs.astral.sh/uv/getting-started/installation/'
 docker compose version *> $null
-if ($LASTEXITCODE -ne 0) { Stop-With 'Docker Compose v2 is required (`docker compose`).' }
+if ($LASTEXITCODE -ne 0) { Write-Failure 'Docker Compose v2 is required (`docker compose`).' }
 docker info *> $null
-if ($LASTEXITCODE -ne 0) { Stop-With 'Docker is installed but not running. Start it and retry.' }
+if ($LASTEXITCODE -ne 0) { Write-Failure 'Docker is installed but not running. Start it and retry.' }
 Write-Ok 'docker and uv found'
 
 if (-not (Test-Path '.env')) {
@@ -64,23 +65,24 @@ $env:FOOD_API_MEILI_MASTER_KEY = if ($env:MEILI_MASTER_KEY) { $env:MEILI_MASTER_
 
 Write-Step 'Installing backend dependencies'
 uv sync --project backend --frozen
-if ($LASTEXITCODE -ne 0) { Stop-With 'uv sync failed.' }
+if ($LASTEXITCODE -ne 0) { Write-Failure 'uv sync failed.' }
 Write-Ok 'backend environment ready'
 
 Write-Step 'Starting Meilisearch'
 docker compose up -d meilisearch
-if ($LASTEXITCODE -ne 0) { Stop-With 'Could not start the Meilisearch container.' }
+if ($LASTEXITCODE -ne 0) { Write-Failure 'Could not start the Meilisearch container.' }
 Write-Ok 'meilisearch container up'
 
 Write-Step 'Waiting for Meilisearch and validating the dish corpus'
 if ($NoSeed) {
     uv run --project backend food-api check
-    if ($LASTEXITCODE -ne 0) { Stop-With 'The dish corpus did not load.' }
+    if ($LASTEXITCODE -ne 0) { Write-Failure 'The dish corpus did not load.' }
     uv run --project backend food-api wait-for-search --timeout 90
+    if ($LASTEXITCODE -ne 0) { Write-Failure 'Meilisearch did not become ready.' }
 } else {
     uv run --project backend food-api bootstrap --timeout 90
+    if ($LASTEXITCODE -ne 0) { Write-Failure 'Bootstrap failed.' }
 }
-if ($LASTEXITCODE -ne 0) { Stop-With 'Bootstrap failed.' }
 
 $apiPort = if ($env:API_PORT) { $env:API_PORT } else { '8000' }
 $frontendPort = if ($env:FRONTEND_PORT) { $env:FRONTEND_PORT } else { '5173' }
@@ -88,7 +90,7 @@ $frontendPort = if ($env:FRONTEND_PORT) { $env:FRONTEND_PORT } else { '5173' }
 if ($Full) {
     Write-Step 'Building and starting the API and frontend containers'
     docker compose up -d --build api frontend
-    if ($LASTEXITCODE -ne 0) { Stop-With 'Could not start the stack.' }
+    if ($LASTEXITCODE -ne 0) { Write-Failure 'Could not start the stack.' }
     Write-Ok 'stack up'
     Write-Host ""
     Write-Host "  Frontend  http://localhost:$frontendPort"
